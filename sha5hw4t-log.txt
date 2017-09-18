@@ -1,5 +1,5 @@
-2 hours 40 minutes spent this session
-2017-09-15
+1 hours 10 minutes spent this session
+2017-09-18
 I hereby certify that all the work in this commit is my own except for 
 materials distributed as part of this class.
 /* do not change the format of anything above this line */
