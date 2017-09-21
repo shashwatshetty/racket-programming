@@ -1,0 +1,5 @@
+q1.rkt:29:52: read: unexpected `)'
+  context...:
+   /proj/racket/plt-released/recent/share/pkgs/htdp-lib/lang/htdp-reader.rkt:14:6: loop
+   ...ib/mzlib/etc.rkt:75:38
+   standard-module-name-resolver
