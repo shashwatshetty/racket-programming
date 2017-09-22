@@ -4,8 +4,6 @@
 (require rackunit)
 (require "extras.rkt")
 
-(provide furlongs-to-barleycorns)
-
 ;; DATA DEFINITIONS:
 ;; A FurlongLength is represented as a PosReal.
 ;; A BarleycornLength is represented as a PosReal.
