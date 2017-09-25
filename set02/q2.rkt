@@ -22,14 +22,19 @@
 ;;   -- "blank"
 ;; INTERP: self-evident
 
+;; EXAMPLES:
+(define red-color "red")
+(define green-color "green")
+(define blank-color "blank")
+
 ;; OBSERVER TEMPLATE:
 ;; ctcolor-fn : CTColor -> ?
 #;
 (define (ctcolor-fn)
    (cond
-      [(= s "red") ...]
-      [(= s "green") ...]
-      [(= s "blank") ...]))
+      [(= s red-color) ...]
+      [(= s green-color) ...]
+      [(= s blank-color) ...]))
 
 ;; A Time is represented as PosInt measured in seconds. 
 
@@ -96,12 +101,12 @@
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (initial-state 5) (make-ctsignal "red" 5 4)
+  (check-equal? (initial-state 5) (make-ctsignal red-color 5 4)
       "(initial-state 5) should return (make-ctsignal red 5 4)"))
 
 ;; STRATEGY: Use Constructor template for ChineseTrafficSignal.
 (define (initial-state num)
-  (make-ctsignal "red" num (sub1 num)))
+  (make-ctsignal red-color num (sub1 num)))
 
 
 
@@ -130,15 +135,15 @@
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (is-red? (next-state (make-ctsignal "red" 4 3)))
+  (check-equal? (is-red? (next-state (make-ctsignal red-color 4 3)))
                 #true
     "(is-red? (next-state (make-ctsignal red 4 3)))
          should return: true")
-  (check-equal? (is-red? (next-state (make-ctsignal "red" 4 0)))
+  (check-equal? (is-red? (next-state (make-ctsignal red-color 4 0)))
                 #false
     "(is-red? (next-state (make-ctsignal red 4 0)))
          should return: false")
-  (check-equal? (is-red? (next-state (make-ctsignal "blank" 4 0)))
+  (check-equal? (is-red? (next-state (make-ctsignal blank-color 4 0)))
                 #true
     "(is-red? (next-state (make-ctsignal blank 4 0)))
          should return: true"))
@@ -147,7 +152,7 @@
 ;;             on current-color.
 (define (is-red? signal)
   (string=? (ctsignal-current-color signal)
-                 "red"))
+                 red-color))
 
 
 
@@ -171,15 +176,15 @@
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (is-green? (next-state (make-ctsignal "green" 5 4)))
+  (check-equal? (is-green? (next-state (make-ctsignal green-color 5 4)))
                 #true
     "(is-green? (next-state (make-ctsignal green 5 4)))
          should return: true")
-  (check-equal? (is-green? (next-state (make-ctsignal "red" 5 0)))
+  (check-equal? (is-green? (next-state (make-ctsignal red-color 5 0)))
                 #true
     "(is-green? (next-state (make-ctsignal red 5 0)))
          should return: true")
-  (check-equal? (is-green? (next-state (make-ctsignal "green" 5 1)))
+  (check-equal? (is-green? (next-state (make-ctsignal green-color 5 1)))
                 #false
     "(is-green? (next-state (make-ctsignal green 5 0)))
          should return: false")
@@ -192,7 +197,7 @@
 ;;             on current-color.
 (define (is-green? signal)
   (string=? (ctsignal-current-color signal)
-                 "green"))
+                 green-color))
 
 
 
@@ -216,11 +221,11 @@
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (is-blank? (next-state (make-ctsignal "green" 5 3)))
+  (check-equal? (is-blank? (next-state (make-ctsignal green-color 5 3)))
                 #true
     "(is-blank? (next-state (make-ctsignal green 5 3)))
          should return: true")
-  (check-equal? (is-blank? (next-state (make-ctsignal "red" 5 1)))
+  (check-equal? (is-blank? (next-state (make-ctsignal red-color 5 1)))
                 #false
     "(is-blank? (next-state (make-ctsignal red 5 1)))
          should return: false")
@@ -233,7 +238,7 @@
 ;;             on current-color.
 (define (is-blank? signal)
   (string=? (ctsignal-current-color signal)
-                 "blank"))
+                 blank-color))
 
 
 
@@ -245,18 +250,18 @@
 
 ;; EXAMPLES:
 ;; (is-end-of-time (initial-state 7)) => false
-;; (is-end-of-time (make-ctsignal "red" 5 0)) => true
-;; (is-end-of-time (make-ctsignal "blank" 5 0)) => true
+;; (is-end-of-time (make-ctsignal red-color 5 0)) => true
+;; (is-end-of-time (make-ctsignal blank-color 5 0)) => true
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (is-end-of-time? (initial-state 9)) #false
      "(is-end-of-time (initial-state 9))
            should return: false")
-  (check-equal? (is-end-of-time? (make-ctsignal "green" 7 4)) #false
+  (check-equal? (is-end-of-time? (make-ctsignal green-color 7 4)) #false
      "(is-end-of-time (make-ctsignal green 7 4))
            should return: false")
-  (check-equal? (is-end-of-time? (make-ctsignal "blank" 7 0)) #true
+  (check-equal? (is-end-of-time? (make-ctsignal blank-color 7 0)) #true
      "(is-end-of-time (make-ctsignal green 7 0))
            should return: true"))
 
@@ -273,32 +278,32 @@
 ;; RETURNS: the color of the signal one second later.
 
 ;;EXAMPLES:
-;; (next-current-color (make-ctsignal "red" 4 3)) => "red"
-;; (next-current-color (make-ctsignal "green" 4 3)) => "blank"
-;; (next-current-color (make-ctsignal "blank" 4 0)) => "red"
-;; (next-current-color (make-ctsignal "red" 4 0)) => "green"
-;; (next-current-color (make-ctsignal "blank" 4 2)) => "green"
+;; (next-current-color (make-ctsignal red-color 4 3)) => red-color
+;; (next-current-color (make-ctsignal green-color 4 3)) => blank-color
+;; (next-current-color (make-ctsignal blank-color 4 0)) => red-color
+;; (next-current-color (make-ctsignal red-color 4 0)) => green-color
+;; (next-current-color (make-ctsignal blank-color 4 2)) => green-color
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (next-current-color
-                 (next-state (make-ctsignal "red" 5 0)))
-                "green"
+                 (next-state (make-ctsignal red-color 5 0)))
+                green-color
      "(next-state (make-ctsignal red 5 0))
            should return: green")
   (check-equal? (next-current-color
                  (next-state (initial-state 6)))
-                "red"
+                red-color
      "(next-current-color (next-state (initial-state 6)))
            should return: red")
   (check-equal? (next-current-color
-                 (next-state (make-ctsignal "blank" 5 2)))
-                "blank"
+                 (next-state (make-ctsignal blank-color 5 2)))
+                blank-color
      "(next-current-color (next-state (make-ctsignal blank 5 2)))
            should return: blank")
   (check-equal? (next-current-color
-                 (next-state (make-ctsignal "blank" 5 0)))
-                "red"
+                 (next-state (make-ctsignal blank-color 5 0)))
+                red-color
      "(next-current-color (next-state (make-ctsignal blank 5 0)))
            should return: red"))
 
@@ -307,16 +312,16 @@
   (cond
     [(is-red? signal)
         (if (is-end-of-time? signal)
-              "green"
-              "red")]
+              green-color
+              red-color)]
     [(is-blank? signal)
         (if (is-end-of-time? signal)
-              "red"
-              "green")]
+              red-color
+              green-color)]
     [(is-green? signal)
         (if (<= (ctsignal-time-left signal) 3)
-              "blank"
-              "green")]))
+              blank-color
+              green-color)]))
 
 
 
@@ -332,10 +337,10 @@
   (check-equal? (next-time-left (initial-state 5)) 3
      "(next-time-left (initial-state 5))
           should return: 3")
-  (check-equal? (next-time-left (make-ctsignal "red" 5 0)) 4
+  (check-equal? (next-time-left (make-ctsignal red-color 5 0)) 4
      "(next-time-left (make-ctsignal red 5 0))
           should return: 4")
-  (check-equal? (next-time-left (next-state (make-ctsignal "green" 5 1))) 4
+  (check-equal? (next-time-left (next-state (make-ctsignal green-color 5 1))) 4
      "(next-time-left (next-state (make-ctsignal green 5 1)))
           should return: 4"))
 
@@ -361,14 +366,14 @@
 ;; TESTS:
 (begin-for-test
   (check-equal? (next-state (initial-state 4))
-                (make-ctsignal "red" 4 2)
+                (make-ctsignal red-color 4 2)
       "(next-state (initial-state 4))
              should return: (make-ctsignal red 4 2)")
   (check-equal? (next-state
                  (next-state
                   (next-state
                    (next-state (initial-state 4)))))
-                (make-ctsignal "green" 4 3)
+                (make-ctsignal green-color 4 3)
       "(next-state
         (next-state
          (next-state
@@ -377,8 +382,8 @@
   (check-equal? (next-state
                  (next-state
                   (next-state
-                   (next-state (make-ctsignal "green" 4 3)))))
-                (make-ctsignal "red" 4 3)
+                   (next-state (make-ctsignal green-color 4 3)))))
+                (make-ctsignal red-color 4 3)
       "(next-state
         (next-state
          (next-state
@@ -387,8 +392,8 @@
   (check-equal? (next-state
                  (next-state
                   (next-state
-                   (next-state (make-ctsignal "red" 5 1)))))
-                (make-ctsignal "blank" 5 2)
+                   (next-state (make-ctsignal red-color 5 1)))))
+                (make-ctsignal blank-color 5 2)
       "(next-state
         (next-state
          (next-state
