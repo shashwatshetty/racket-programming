@@ -1,0 +1,20 @@
+--------------------
+q1 > Test #3
+Test #3
+FAILURE
+name:       check-equal?
+location:   q1-bb.rkt:23:4
+params:     (lexer "abc" "")
+(lexer "" "abc")
+actual:     (lexer "abc" "")
+expected:   (lexer "" "abc")
+expression: (check-equal? (initial-lexer "abc") (make-lexer "" "abc"))
+message:    "returns the lexer with no token and the given input"
+Check failure
+--------------------
+11 success(es) 1 failure(s) 0 error(s) 12 test(s) run
+extras.rkt Wed Sep 14 08:52:19 2016
+q1.rkt appears to be in a correctly named folder. Running tests...
+Running tests from q1.rkt...
+All tests passed (20 tests).
+1
