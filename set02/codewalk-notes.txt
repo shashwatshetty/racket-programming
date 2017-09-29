@@ -1,0 +1,49 @@
+TA-1 Name: - Sushant Pritmani
+TA-2 Name: - Harshit Vora
+
+Student CCIS ID: sha5hw4t
+
+Problem Set #: set02
+Question Codewalked: - Q1
+
+Design Grade: - A
+Presentation Grade: - A
+
+INSTRUCTIONS TO TAs: Delete items that do not apply.  For items that apply,
+indicate which data definitions/functions have the indicated problem.
+
+================
+
+Examples and Tests:
+
+-- had 100% test coverage
+
+================
+
+Data Design:
+
+-- "blank" in CTColor is not self evident, what does it mean?
+
+-- constants should be defined in capital letters to follow style guideline
+
+================
+
+Contract/Purpose Statement/Design Strategy:
+
+-- function definition too complicated or obscure
+Break next-current-color into more functions to follow one function one task
+
+-- Missing examples for some functions
+
+================
+
+Presentation:
+
+-- Student answered all questions satisfactorily and gave a good presentation
+
+
+================
+
+
+
+
