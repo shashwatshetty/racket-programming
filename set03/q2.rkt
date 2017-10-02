@@ -1,11 +1,11 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-reader.ss" "lang")((modname q1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+#reader(lib "htdp-intermediate-reader.ss" "lang")((modname q2) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require rackunit)
 (require "extras.rkt")
 (require 2htdp/image)
 (require 2htdp/universe)
-(check-location "03" "q1.rkt")
+(check-location "03" "q2.rkt")
 
 (provide simulation
          initial-world
@@ -39,6 +39,10 @@
 
 ;; image of the squash racket
 (define RACKET (rectangle 47 7 "solid" "green"))
+
+;; selection region of mouse event
+(define RACKET-SELECTION-HEIGHT 25)
+(define SELECT-BALL (circle 4 "solid" "blue"))
 
 ;; half the length of squash racket image
 (define RACKET-MID-LENGTH (/ (image-width RACKET) 2))
@@ -86,23 +90,29 @@
 ;;         (ball-vy ball))
 
 ;; A Racket is represented as a struct
-;; (make-racket x y vx vy)
+;; (make-racket x y vx vy selected? x-distance)
 ;;  with the following fields:
 ;; INTERP:
-;;    x  : PosReal is the x-co-ordinate of the
+;;    x         : PosReal is the x-co-ordinate of the
 ;;                  pixel at the center of the racket.
-;;    y  : PosReal is the y-co-ordinate of the
+;;    y         : PosReal is the y-co-ordinate of the
 ;;                  pixel at the center of the racket.
-;;    vx : Real    is the x-component of the velocity
+;;    vx        : Real    is the x-component of the velocity
 ;;                  of the racket measured as pixel per tick.
-;;    vy : Real    is the y-component of the velocity
+;;    vy        : Real    is the y-component of the velocity
 ;;                  of the racket measured as pixel per tick.
+;;    selected? : Boolean is true iff the racket is
+;;                  selected by the mouse.
+;;    x-distance  : Real    is the x-distance of the center of the
+;;                   racket from the point of mouse selection.
+;;    y-distance  : Real    is the y-distance of the center of the
+;;                   racket from the point of mouse selection.
 
 ;; IMPLEMENTATION:
-(define-struct racket (x y vx vy))
+(define-struct racket (x y vx vy selected? x-distance y-distance))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-racket PosReal PosReal Real Real)
+;; (make-racket PosReal PosReal Real Real Boolean Real Real)
 
 ;; OBSERVER TEMPLATE:
 ;; racket-fn: Racket -> ?
@@ -110,13 +120,39 @@
 ;;    (... (racket-x racket)
 ;;         (racket-y racket)
 ;;         (racket-vx racket)
-;;         (racket-vy racket))
+;;         (racket-vy racket)
+;;         (racket-selected? racket)
+;;         (racket-x-distance racket)
+;;         (racket-y-distance racket))
+
+;; A SelectBall is represented as a struct
+;; (make-select-ball x y)
+;;  with the following fields:
+;; INTERP:
+;;    x  : PosReal is the x-co-ordinate of the
+;;            pixel at the center of the ball displayed on selection
+;;            of the racket.
+;;    y  : PosReal is the y-co-ordinate of the
+;;            pixel at the center of the ball displayed on selection
+;;            of the racket.
+
+;; IMPLEMENTATION:
+(define-struct select-ball (x y))
+
+;; CONSTRUCTOR TEMPLATE:
+;; (make-select-ball PosReal PosReal)
+
+;; OBSERVER TEMPLATE:
+;; select-ball-fn: SelectBall -> ?
+;; (define (select-ball-fn select)
+;;    (... (select-ball-x select)
+;;         (select-ball-y select))
 
 ;; A World is represented as a struct
-;; (make-world ball racket ready-to-serve? in-rally? speed ticks-passed)
+;; (make-world ball racket ready-to-serve? in-rally? speed ticks-passed select)
 ;;  with the following fields:
 ;;     ball            : Ball       is the ball in the world.
-;;     racket          : Racket     is the Racket in the world.
+;;     racket          : Racket     is the racket in the world.
 ;;     ready-to-serve? : Boolean    represents if the world is in a
 ;;                                   ready to serve state.
 ;;     in-rally?       : Boolean    represents if the world is in a
@@ -125,13 +161,15 @@
 ;;                                   given by the user.
 ;;     ticks-passed    : PosInt     is the number of ticks that have passed
 ;;                                   in a non-paused or paused state.
+;;     select          : SelectBall is the ball displayed when
+;;                                   racket in the world is selected.
 
 ;; IMPLEMENTATION:
 (define-struct world
-  (ball racket ready-to-serve? in-rally? speed ticks-passed))
+  (ball racket ready-to-serve? in-rally? speed ticks-passed select))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-world Ball Racket Boolean Boolean NonNegReal PosInt)
+;; (make-world Ball Racket Boolean Boolean NonNegReal PosInt SelectBall)
 
 ;; OBSERVER TEMPLATE:
 ;; world-fn: World -> ?
@@ -140,7 +178,8 @@
 ;;         (world-ready-to-serve? world)
 ;;         (world-in-rally? world)
 ;;         (world-speed world)
-;;         (world-ticks-passed world))
+;;         (world-ticks-passed world)
+;;         (world-select world)
 
 
 
@@ -156,32 +195,35 @@
 
 ;; EXAMPLES:
 ;; (initial-world 1) => (make-world (make-ball 330 384 0 0)
-;;                                 (make-racket 330 384 0 0)
-;;                                 #true
-;;                                 #false
-;;                                 1
-;;                                 0)
+;;                                  (make-racket 330 384 0 0 #false 0 0)
+;;                                  #true
+;;                                  #false
+;;                                  1
+;;                                  0
+;;                                  (make-select-ball 0 0))
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (initial-world 1)
                 (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0)
-                            (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0)
+                            (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
                             #true
                             #false
                             1
-                            0)
+                            0
+                            (make-select-ball 0 0))
      "(initial-world 1) should return: world at initial position
              in a ready to serve state."))
 
 ;; STRATEGY: Use Constructor Template for World.
 (define (initial-world sim-speed)
   (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0)
-              (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0)
+              (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
               #true
               #false
               sim-speed
-              0))
+              0
+              (make-select-ball 0 0)))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; update-serve-ready : World -> Boolean
@@ -190,22 +232,24 @@
 
 ;; EXAMPLES:
 ;; (update-serve-ready (make-world (make-ball 330 384 0 0)
-;;                                 (make-racket 330 384 0 0)
+;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #true
 ;;                                 #false
 ;;                                 1
-;;                                 0))
+;;                                 0
+;;                                 (make-select-ball 0 0)))
 ;;                                         => #false
 
 ;;TESTS:
 (begin-for-test
   (check-equal? (update-serve-ready
                  (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0)
-                             (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0)
+                             (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
                              #true
                              #false
                              1
-                             0))
+                             0
+                             (make-select-ball 0 0)))
                 #false
      "(update-serve-ready (World with world-ready-to-serve? = true))
          should return: false"))
@@ -222,22 +266,24 @@
 
 ;; EXAMPLES:
 ;; (update-in-rally (make-world (make-ball 330 384 0 0)
-;;                                 (make-racket 330 384 0 0)
-;;                                 #true
-;;                                 #false
-;;                                 1
-;;                                 0))
-;;                                         => #true
+;;                              (make-racket 330 384 0 0 #false 0 0)
+;;                              #true
+;;                              #false
+;;                              1
+;;                              0
+;;                              (make-select-ball 0 0)))
+;;                                       => #true
 
 ;;TESTS:
 (begin-for-test
   (check-equal? (update-in-rally
                  (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0)
-                             (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0)
+                             (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
                              #true
                              #false
                              1
-                             0))
+                             0
+                             (make-select-ball 0 0)))
                 #true
      "(update-serve-ready (World with world-in-rally? = false))
          should return: true"))
@@ -352,23 +398,23 @@
 
 ;; EXAMPLES:
 ;; (ball-hitting-racket? (make-ball 100 293 3 9)
-;;                       (make-racket 120 300 0 0)) => #true
+;;                       (make-racket 120 300 0 0 #false 0 0)) => #true
 ;; (ball-hitting-racket? (make-ball 150 350 3 -9))
-;;                       (make-racket 20 645 3 9)) => #false
+;;                       (make-racket 20 645 3 9 #false 0 0)) => #false
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (ball-hitting-racket? (make-ball 100 293 3 9)
-                                      (make-racket 120 300 0 0))
+                                      (make-racket 120 300 0 0 #false 0 0))
                 #true
     "(ball-hitting-racket? (make-ball 100 293 3 9)
-                           (make-racket 120 300 0 0))
+                           (make-racket 120 300 0 0 #false 0 0))
           should return: true")
   (check-equal? (ball-hitting-racket? (make-ball 150 350 3 -9)
-                                      (make-racket 20 645 3 9))
+                                      (make-racket 20 645 3 9 #false 0 0))
                 #false
     "(ball-hitting-racket? (make-ball 100 293 3 9)
-                           (make-racket 120 300 0 0))
+                           (make-racket 120 300 0 0 #false 0 0))
           should return: false"))
 
 ;; STRATEGY: Use Observer Template for Ball & Racket
@@ -519,23 +565,23 @@
 
 ;; EXAMPLES:
 ;; (move-ball (make-ball 100 293 3 9)
-;;            (make-racket 120 300 0 0)) => (make-ball 103 298 3 -9)
+;;            (make-racket 120 300 0 0 #false 0 0)) => (make-ball 103 298 3 -9)
 ;; (move-ball (make-ball 150 350 3 -9))
-;;            (make-racket 20 645 3 9))  => (make-ball 153 341 3 -9)
+;;            (make-racket 20 645 3 9 #false 0 0))  => (make-ball 153 341 3 -9)
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (move-ball (make-ball 100 293 3 9)
-                           (make-racket 120 300 0 0))
+                           (make-racket 120 300 0 0 #false 0 0))
                 (make-ball 103 298 3 -9)
     "(ball-hitting-racket? (make-ball 100 293 3 9)
-                           (make-racket 120 300 0 0))
+                           (make-racket 120 300 0 0 #false 0 0))
           should return: (make-ball 103 298 3 -9)")
   (check-equal? (move-ball (make-ball 150 350 3 -9)
-                           (make-racket 20 645 3 9))
+                           (make-racket 20 645 3 9 #false 0 0))
                 (make-ball 153 341 3 -9)
     "(ball-hitting-racket? (make-ball 100 293 3 9)
-                           (make-racket 120 300 0 0))
+                           (make-racket 120 300 0 0 #false 0 0))
           should return: (make-ball 153 341 3 -9)"))
 
 ;; STRATEGY: Cases on if ball hits the racket
@@ -563,14 +609,14 @@
 ;;            left wall in the next tick.
 
 ;; EXAMPLES:
-;; (racket-hitting-left-wall? (make-racket 25 40 -3 1)) => #true
-;; (racket-hitting-left-wall? (make-racket 65 40 3 1)) => #false
+;; (racket-hitting-left-wall? (make-racket 25 40 -3 1 #false 0 0)) => #true
+;; (racket-hitting-left-wall? (make-racket 65 40 3 1 #false 0 0))  => #false
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (racket-hitting-left-wall? (make-racket 25 40 -3 1))
+  (check-equal? (racket-hitting-left-wall? (make-racket 25 40 -3 1 #false 0 0))
                 #true
-     "(racket-hitting-left-wall? (make-racket 25 40 -3 1))
+     "(racket-hitting-left-wall? (make-racket 25 40 -3 1 #false 0 0))
             should return: true"))
 
 ;; STRATEGY: Use Observer Template for Racket
@@ -589,14 +635,14 @@
 ;;            right wall in the next tick.
 
 ;; EXAMPLES:
-;; (racket-hitting-right-wall? (make-racket 400 40 3 1)) => #true
-;; (racket-hitting-right-wall? (make-racket 65 40 3 1)) => #false
+;; (racket-hitting-right-wall? (make-racket 400 40 3 1 #false 0 0)) => #true
+;; (racket-hitting-right-wall? (make-racket 65 40 3 1 #false 0 0))  => #false
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (racket-hitting-right-wall? (make-racket 400 40 3 1))
+  (check-equal? (racket-hitting-right-wall? (make-racket 400 40 3 1 #false 0 0))
                 #true
-     "(racket-hitting-right-wall? (make-racket 400 40 3 1))
+     "(racket-hitting-right-wall? (make-racket 400 40 3 1 #false 0 0))
             should return: true"))
 
 ;; STRATEGY: Use Observer Template for Racket
@@ -615,14 +661,14 @@
 ;;            top wall in the next tick.
 
 ;; EXAMPLES:
-;; (racket-hitting-top-wall? (make-racket 120 2 0 -3)) => #true
-;; (racket-hitting-top-wall? (make-racket 65 40 3 1)) => #false
+;; (racket-hitting-top-wall? (make-racket 120 2 0 -3 #false 0 0)) => #true
+;; (racket-hitting-top-wall? (make-racket 65 40 3 1 #false 0 0))  => #false
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (racket-hitting-top-wall? (make-racket 65 40 3 1))
+  (check-equal? (racket-hitting-top-wall? (make-racket 65 40 3 1 #false 0 0))
                 #false
-     "(racket-hitting-top-wall? (make-racket 65 40 3 1))
+     "(racket-hitting-top-wall? (make-racket 65 40 3 1 #false 0 0))
             should return: false"))
 
 ;; STRATEGY: Use Observer Template for Racket
@@ -638,14 +684,14 @@
 ;;            bottom wall in the next tick.
 
 ;; EXAMPLES:
-;; (racket-hitting-bottom-wall? (make-racket 120 647 0 5)) => #true
-;; (racket-hitting-bottom-wall? (make-racket 65 40 3 1)) => #false
+;; (racket-hitting-bottom-wall? (make-racket 120 647 0 5 #false 0 0)) => #true
+;; (racket-hitting-bottom-wall? (make-racket 65 40 3 1 #false 0 0))   => #false
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (racket-hitting-bottom-wall? (make-racket 120 647 0 5))
+  (check-equal? (racket-hitting-bottom-wall? (make-racket 120 647 0 5 #false 0 0))
                 #true
-     "(racket-hitting-bottom-wall? (make-racket 120 647 0 5))
+     "(racket-hitting-bottom-wall? (make-racket 120 647 0 5 #false 0 0))
             should return: true"))
 
 ;; STRATEGY: Use Observer Template for Racket
@@ -661,23 +707,23 @@
 ;;             of the racket in the next tick.
 
 ;; EXAMPLES:
-;; (update-racket-x (make-racket 25 40 -3 1)) => 23.5
-;; (update-racket-x (make-racket 400 40 3 1)) => 401.5
-;; (update-racket-x (make-racket 65 40 3 1))  => 68
+;; (update-racket-x (make-racket 25 40 -3 1 #false 0 0)) => 23.5
+;; (update-racket-x (make-racket 400 40 3 1 #false 0 0)) => 401.5
+;; (update-racket-x (make-racket 65 40 3 1#false 0 0))   => 68
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (update-racket-x (make-racket 25 40 -3 1))
+  (check-equal? (update-racket-x (make-racket 25 40 -3 1 #false 0 0))
                 23.5
-      "(update-racket-x (make-racket 25 40 -3 1))
+      "(update-racket-x (make-racket 25 40 -3 1 #false 0 0))
               should return: 23.5")
-  (check-equal? (update-racket-x (make-racket 400 40 3 1))
+  (check-equal? (update-racket-x (make-racket 400 40 3 1 #false 0 0))
                 401.5
-      "(update-racket-x (make-racket 400 40 3 1))
+      "(update-racket-x (make-racket 400 40 3 1 #false 0 0))
               should return: 401.5")
-  (check-equal? (update-racket-x (make-racket 65 40 3 1))
+  (check-equal? (update-racket-x (make-racket 65 40 3 1 #false 0 0))
                 68
-      "(update-racket-x (make-racket 65 40 3 1))
+      "(update-racket-x (make-racket 65 40 3 1 #false 0 0))
               should return: 68"))
 
 
@@ -697,18 +743,18 @@
 ;;             of the racket in the next tick.
 
 ;; EXAMPLES:
-;; (update-racket-y (make-racket 120 647 0 5)) => 649
-;; (update-racket-y (make-racket 65 40 3 1))   => 41
+;; (update-racket-y (make-racket 120 647 0 5 #false 0 0)) => 649
+;; (update-racket-y (make-racket 65 40 3 1 #false 0 0))   => 41
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (update-racket-y (make-racket 120 647 0 5))
+  (check-equal? (update-racket-y (make-racket 120 647 0 5 #false 0 0))
                 649
-      "(update-racket-y (make-racket 120 647 0 5))
+      "(update-racket-y (make-racket 120 647 0 5 #false 0 0))
               should return: 649")
-  (check-equal? (update-racket-y (make-racket 65 40 3 1))
+  (check-equal? (update-racket-y (make-racket 65 40 3 1 #false 0 0))
                 41
-      "(update-racket-y (make-racket 65 40 3 1))
+      "(update-racket-y (make-racket 65 40 3 1 #false 0 0))
               should return: 41"))
 
 ;; STRATEGY: Cases on if ball hits walls along the y-axis.
@@ -726,26 +772,26 @@
 
 ;; EXAMPLES:
 (define ANY-OTHER-KEY "q")
-;; (update-racket-vx (make-racket 330 384 0 0) LEFT-ARROW-KEY)  => -1
-;; (update-racket-vx (make-racket 330 384 2 0) RIGHT-ARROW-KEY) => 3
-;; (update-racket-vx (make-racket 330 384 2 0) ANY-OTHER-KEY) => 2
+;; (update-racket-vx (make-racket 330 384 0 0 #false 0 0) LEFT-ARROW-KEY)  => -1
+;; (update-racket-vx (make-racket 330 384 2 0 #false 0 0) RIGHT-ARROW-KEY) => 3
+;; (update-racket-vx (make-racket 330 384 2 0 #false 0 0) ANY-OTHER-KEY) => 2
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (update-racket-vx
-                 (make-racket 330 384 0 0) LEFT-ARROW-KEY)
+                 (make-racket 330 384 0 0 #false 0 0) LEFT-ARROW-KEY)
                 -1
-    "(update-racket-vx (make-racket 330 384 0 0) LEFT-ARROW-KEY)
+    "(update-racket-vx (make-racket 330 384 0 0 #false 0 0) LEFT-ARROW-KEY)
         should return: -1")
   (check-equal? (update-racket-vx
-                 (make-racket 330 384 2 0) RIGHT-ARROW-KEY)
+                 (make-racket 330 384 2 0 #false 0 0) RIGHT-ARROW-KEY)
                 3
-    "(update-racket-vx (make-racket 330 384 2 0) RIGHT-ARROW-KEY)
+    "(update-racket-vx (make-racket 330 384 2 0 #false 0 0) RIGHT-ARROW-KEY)
         should return: 3")
   (check-equal? (update-racket-vx
-                 (make-racket 330 384 2 0) ANY-OTHER-KEY)
+                 (make-racket 330 384 2 0 #false 0 0) ANY-OTHER-KEY)
                 2
-    "(update-racket-vx (make-racket 330 384 2 0) ANY-OTHER-KEY)
+    "(update-racket-vx (make-racket 330 384 2 0 #false 0 0) ANY-OTHER-KEY)
         should return: 2"))
 
 ;; STRATEGY: Cases on the KeyEvent passed.
@@ -762,26 +808,26 @@
 ;;             of the racket in the next tick.
 
 ;; EXAMPLES:
-;; (update-racket-vy (make-racket 330 384 0 0) UP-ARROW-KEY)  => -1
-;; (update-racket-vy (make-racket 330 384 2 3) DOWN-ARROW-KEY) => 4
-;; (update-racket-vy (make-racket 330 384 0 2) ANY-OTHER-KEY) => 2
+;; (update-racket-vy (make-racket 330 384 0 0 #false 0 0) UP-ARROW-KEY)   => -1
+;; (update-racket-vy (make-racket 330 384 2 3 #false 0 0) DOWN-ARROW-KEY) => 4
+;; (update-racket-vy (make-racket 330 384 0 2 #false 0 0) ANY-OTHER-KEY)  => 2
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (update-racket-vy
-                 (make-racket 330 384 0 0) UP-ARROW-KEY)
+                 (make-racket 330 384 0 0 #false 0 0) UP-ARROW-KEY)
                 -1
-    "(update-racket-vy (make-racket 330 384 0 0) UP-ARROW-KEY)
+    "(update-racket-vy (make-racket 330 384 0 0 #false 0 0) UP-ARROW-KEY)
         should return: -1")
   (check-equal? (update-racket-vy
-                 (make-racket 330 384 2 3) DOWN-ARROW-KEY)
+                 (make-racket 330 384 2 3 #false 0 0) DOWN-ARROW-KEY)
                 4
-    "(update-racket-vy (make-racket 330 384 2 3) DOWN-ARROW-KEY)
+    "(update-racket-vy (make-racket 330 384 2 3 #false 0 0) DOWN-ARROW-KEY)
         should return: 4")
   (check-equal? (update-racket-vy
-                 (make-racket 330 384 0 2) ANY-OTHER-KEY)
+                 (make-racket 330 384 0 2 #false 0 0) ANY-OTHER-KEY)
                 2
-    "(update-racket-vy (make-racket 330 384 0 2) ANY-OTHER-KEY)
+    "(update-racket-vy (make-racket 330 384 0 2 #false 0 0) ANY-OTHER-KEY)
         should return: 2"))
 
 ;; STRATEGY: Cases on the KeyEvent passed.
@@ -797,24 +843,24 @@
 ;; RETURNS: the racket in the next tick with updated velocities.
 
 ;; EXAMPLES:
-;; (update-racket-speed (make-racket 330 384 0 0) LEFT-ARROW-KEY)
-;;                               => (make-racket 330 384 -1 0)
-;; (update-racket-speed (make-racket 330 384 2 0) RIGHT-ARROW-KEY)
-;;                               => (make-racket 330 384 3 0)
-;; (update-racket-speed (make-racket 330 384 0 0) UP-ARROW-KEY)
-;;                               => (make-racket 330 384 0 -1)
-;; (update-racket-speed (make-racket 330 384 2 3) DOWN-ARROW-KEY)
-;;                               => (make-racket 330 384 2 4)
-;; (update-racket-speed (make-racket 330 384 0 2) ANY-OTHER-KEY)
-;;                               => (make-racket 330 384 0 2)
+;; (update-racket-speed (make-racket 330 384 0 0  #false 0 0) LEFT-ARROW-KEY)
+;;                               => (make-racket 330 384 -1 0 #false 0 0)
+;; (update-racket-speed (make-racket 330 384 2 0 #false 0 0) RIGHT-ARROW-KEY)
+;;                               => (make-racket 330 384 3 0 #false 0 0)
+;; (update-racket-speed (make-racket 330 384 0 0 #false 0 0) UP-ARROW-KEY)
+;;                               => (make-racket 330 384 0 -1 #false 0 0)
+;; (update-racket-speed (make-racket 330 384 2 3 #false 0 0) DOWN-ARROW-KEY)
+;;                               => (make-racket 330 384 2 4 #false 0 0)
+;; (update-racket-speed (make-racket 330 384 0 2 #false 0 0) ANY-OTHER-KEY)
+;;                               => (make-racket 330 384 0 2 #false 0 0)
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (update-racket-speed
-                 (make-racket 330 384 2 0) UP-ARROW-KEY)
-                (make-racket 330 384 2 -1)
-    "(update-racket-vy (make-racket 330 384 2 0) UP-ARROW-KEY)
-        should return: (make-racket 330 384 2 -1)"))
+                 (make-racket 330 384 2 0 #false 0 0) UP-ARROW-KEY)
+                (make-racket 330 384 2 -1 #false 0 0)
+    "(update-racket-vy (make-racket 330 384 2 0 #false 0 0) UP-ARROW-KEY)
+        should return: (make-racket 330 384 2 -1 #false 0 0)"))
 
 ;; STRATEGY: Divide into Simple Functions
 ;;             and Use Constructor Template for Racket.
@@ -822,7 +868,31 @@
   (make-racket (racket-x racket)
                (racket-y racket)
                (update-racket-vx racket kev)
-               (update-racket-vy racket kev)))
+               (update-racket-vy racket kev)
+               (racket-selected? racket)
+               (racket-x-distance racket)
+               (racket-y-distance racket)))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; update-racket-selected : Racket Integer Integer MouseEvent -> Boolean
+;; GIVEN:   a racket, the x and y coordinates of a mouse event,
+;;            and the mouse event
+;; RETURNS: the updated value of if the racket is selected.
+
+;; STRATEGY:
+(define (update-racket-selected racket mx my)
+  (and (<= (- (+ (racket-x racket) (racket-vx racket))
+              RACKET-MID-LENGTH)
+           mx
+           (+ (racket-x racket) (racket-vx racket)
+              RACKET-MID-LENGTH))
+       (<= (- (+ (racket-y racket) (racket-vy racket))
+              RACKET-SELECTION-HEIGHT)
+           my
+           (+ (racket-y racket) (racket-vy racket)
+              RACKET-SELECTION-HEIGHT))
+       ))
+
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; move-racket : Ball Racket -> Racket
@@ -831,24 +901,26 @@
 
 ;; EXAMPLES:
 ;; (move-racket (make-ball 100 293 3 9)
-;;              (make-racket 120 300 0 -1)) => (make-racket 120 299 0 0)
+;;              (make-racket 120 300 0 -1 #false 0 0))
+;;                   => (make-racket 120 299 0 0 #false 0 0)
 ;; (move-racket (make-ball 150 350 3 -9))
-;;              (make-racket 20 645 3 9))   => (make-racket 23 649 3 9)
+;;              (make-racket 20 645 3 9 #false 0 0))
+;;                   => (make-racket 23 649 3 9 #false 0 0)
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (move-racket (make-ball 100 293 3 9)
-                             (make-racket 120 300 0 -1))
-                (make-racket 120 299 0 0)
+                             (make-racket 120 300 0 -1 #false 0 0))
+                (make-racket 120 299 0 0 #false 0 0)
     "(move-racket (make-ball 100 293 3 9)
-                  (make-racket 120 300 0 -1))
-          should return: (make-racket 120 299 0 0)")
+                  (make-racket 120 300 0 -1 #false 0 0))
+          should return: (make-racket 120 299 0 0 #false 0 0)")
   (check-equal? (move-racket (make-ball 150 350 3 -9)
-                             (make-racket 40 645 3 9))
-                (make-racket 43 649 3 9)
-    "(move-racket (make-ball 150 350 3 -9))
-                  (make-racket 40 645 3 9))
-          should return: (make-racket 43 649 3 9)"))
+                             (make-racket 40 645 3 9 #false 0 0))
+                (make-racket 43 649 3 9 #false 0 0)
+    "(move-racket (make-ball 150 350 3 -9 #false))
+                  (make-racket 40 645 3 9 #false 0 0))
+          should return: (make-racket 43 649 3 9 #false 0 0)"))
 
 ;; STRATEGY: Cases on if ball hits the racket
 ;;             and Use Constructor Template for Racket.
@@ -858,16 +930,22 @@
       (make-racket (update-racket-x racket)
                    (update-racket-y racket)
                    (racket-vx racket)
-                   0)
+                   0
+                   (racket-selected? racket)
+                   (racket-x-distance racket)
+                   (racket-y-distance racket))
       (make-racket (update-racket-x racket)
                    (update-racket-y racket)
                    (racket-vx racket)
-                   (racket-vy racket))))
+                   (racket-vy racket)
+                   (racket-selected? racket)
+                   (racket-x-distance racket)
+                   (racket-y-distance racket))))
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; FUNCTIONS MANIPULATING STATES OF THE World:
+;; FUNCTIONS MANIPULATING STATES OF THE WORLD:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -878,58 +956,66 @@
 
 ;; EXAMPLES:
 ;; (move-world (make-world (make-ball 330 384 3 -9)
-;;                         (make-racket 330 384 0 0)
+;;                         (make-racket 330 384 0 0 #false 0 0)
 ;;                         #false
 ;;                         #true
 ;;                         1
-;;                         4)
+;;                         4
+;;                         (make-select-ball 0 0))
 ;;                  => (make-world (make-ball 333 375 3 -9)
-;;                                 (make-racket 330 384 0 0)
+;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #false
 ;;                                 #true
 ;;                                 1
-;;                                 5)
+;;                                 5
+;;                                 (make-select-ball 0 0))
 ;; (move-world (make-world (make-ball 20 645 3 9))
-;;                         (make-racket 330 384 0 0)
+;;                         (make-racket 330 384 0 0 #false 0 0)
 ;;                         #false
 ;;                         #true
 ;;                         1
-;;                         4)
+;;                         4
+;;                         (make-select-ball 0 0))
 ;;                  => (make-world (make-ball 20 645 3 9))
-;;                                 (make-racket 330 384 0 0)
+;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #false
 ;;                                 #false
 ;;                                 1
-;;                                 0)
+;;                                 0
+;;                                 (make-select-ball 0 0))
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (move-world (make-world (make-ball 330 384 3 -9)
-                                        (make-racket 330 384 0 0)
+                                        (make-racket 330 384 0 0 #false 0 0)
                                         #false
                                         #true
                                         1
-                                        4))
+                                        4
+                                        (make-select-ball 0 0)))
                 (make-world (make-ball 333 375 3 -9)
-                            (make-racket 330 384 0 0)
+                            (make-racket 330 384 0 0 #false 0 0)
                             #false
                             #true
                             1
-                            5)
+                            5
+                            (make-select-ball 0 0))
      "(move-world World in a rally state) should return: world
            at the next tick with appropriate updates to its fields.")
   (check-equal? (move-world (make-world (make-ball 20 645 3 9)
-                                        (make-racket 330 384 0 0)
+                                        (make-racket 330 384 0 0 #false 0 0)
                                         #false
                                         #true
                                         1
-                                        4))
+                                        4
+                                        (make-select-ball 0 0)))
                 (make-world (make-ball 20 645 3 9)
-                            (make-racket 330 384 0 0)
+                            (make-racket 330 384 0 0 #false 0 0)
                             #false
                             #false
                             1
-                            0)
+                            0
+                            (make-select-ball 0 0))
      "(move-world World with ball hitting bottom wall in next tick)
             should return: world in paused state."))
 
@@ -944,7 +1030,8 @@
                   (world-ready-to-serve? w)
                   (world-in-rally? w)
                   (world-speed w)
-                  (add1 (world-ticks-passed w)))))
+                  (add1 (world-ticks-passed w))
+                  (world-select w))))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; pause-world : World -> World
@@ -953,17 +1040,19 @@
 
 ;; EXAMPLES:
 ;; (pause-world (make-world (make-ball 20 645 3 9))
-;;                         (make-racket 330 384 0 0)
+;;                         (make-racket 330 384 0 0 #false 0 0)
 ;;                         #false
 ;;                         #true
 ;;                         1
-;;                         4)
+;;                         4
+;;                         (make-select-ball 0 0))
 ;;                  => (make-world (make-ball 20 645 3 9))
-;;                                 (make-racket 330 384 0 0)
+;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #false
 ;;                                 #false
 ;;                                 1
-;;                                 0)
+;;                                 0
+;;                                 (make-select-ball 0 0))
 
 ;; STRATEGY: Divide into simple functions
 ;;             and Use Constructor Template for World.
@@ -973,7 +1062,8 @@
               (world-ready-to-serve? w)
               (update-in-rally w)
               (world-speed w)
-              0))
+              0
+              (world-select w)))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; restart-world : World -> World
@@ -984,58 +1074,66 @@
 
 ;; EXAMPLES:
 ;; (restart-world (make-world (make-ball 20 645 3 9)
-;;                         (make-racket 330 384 0 0)
+;;                         (make-racket 330 384 0 0 #false 0 0)
 ;;                         #false
 ;;                         #false
 ;;                         1
-;;                         1)
+;;                         1
+;;                         (make-select-ball 0 0))
 ;;                  => (make-world (make-ball 20 645 3 9)
-;;                                 (make-racket 330 384 0 0)
+;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #false
 ;;                                 #false
 ;;                                 1
-;;                                 2)
+;;                                 2
+;;                                 (make-select-ball 0 0))
 ;; (restart-world (make-world (make-ball 20 645 3 9))
-;;                         (make-racket 330 384 0 0)
+;;                         (make-racket 330 384 0 0 #false 0 0)
 ;;                         #false
 ;;                         #false
 ;;                         1
-;;                         4)
+;;                         4
+;;                         (make-select-ball 0 0))
 ;;                  => (make-world (make-ball 330 384 0 0))
-;;                                 (make-racket 330 384 0 0)
+;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #true
 ;;                                 #false
 ;;                                 1
-;;                                 0)
+;;                                 0
+;;                                 (make-select-ball 0 0))
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (restart-world (make-world (make-ball 20 645 3 9)
-                                        (make-racket 330 384 0 0)
-                                        #false
-                                        #false
-                                        1
-                                        1))
+                                           (make-racket 330 384 0 0 #false 0 0)
+                                           #false
+                                           #false
+                                           1
+                                           1
+                                           (make-select-ball 0 0)))
                 (make-world (make-ball 20 645 3 9)
-                            (make-racket 330 384 0 0)
+                            (make-racket 330 384 0 0 #false 0 0)
                             #false
                             #false
                             1
-                            2)
+                            2
+                            (make-select-ball 0 0))
      "(restart-world World in paused state for less than 3 seconds)
             should return: world in paused state in next tick.")
   (check-equal? (restart-world (make-world (make-ball 20 645 3 9)
-                                        (make-racket 330 384 0 0)
-                                        #false
-                                        #false
-                                        1
-                                        4))
+                                           (make-racket 330 384 0 0 #false 0 0)
+                                           #false
+                                           #false
+                                           1
+                                           4
+                                           (make-select-ball 0 0)))
                 (make-world (make-ball 330 384 0 0)
-                            (make-racket 330 384 0 0)
+                            (make-racket 330 384 0 0 #false 0 0)
                             #true
                             #false
                             1
-                            0)
+                            0
+                            (make-select-ball 0 0))
      "(restart-world World in paused state for more than 3 seconds)
             should return: world in ready to serve state."))
 
@@ -1048,7 +1146,8 @@
                        (world-ready-to-serve? w)
                        (world-in-rally? w)
                        (world-speed w)
-                       (add1 (world-ticks-passed w)))
+                       (add1 (world-ticks-passed w))
+                       (world-select w))
            (initial-world (world-speed w))))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
@@ -1065,6 +1164,28 @@
       (restart-world w)))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
+;; place-seect-ball : World -> Scene
+;; GIVEN:   a world
+;; RETURNS: a Scene that portrays the given world with the
+;;            select ball at the position where mouse is clicked.
+
+;; EXAMPLE:
+
+;; STRATEGY: Place the image of the Ball & Racket on an empty canvas
+;;             depending on if world state is paused or no.
+(define (place-select-ball w)
+  (place-image BALL
+               (ball-x (world-ball w))
+               (ball-y (world-ball w))
+               (place-image SELECT-BALL
+                    (select-ball-x (world-select w))
+                    (select-ball-y (world-select w))
+                    (place-image RACKET
+                         (racket-x (world-racket w))
+                         (racket-y (world-racket w))
+                         EMPTY-SCENE))))
+
+;; CONTRACT & PURPOSE STATEMENTS:
 ;; world-to-scene : World -> Scene
 ;; GIVEN:   a world
 ;; RETURNS: a Scene that portrays the given world.
@@ -1076,11 +1197,13 @@
 (define (world-to-scene w)
   (if (or (world-ready-to-serve? w)
           (world-in-rally? w))
-      (place-image BALL (ball-x (world-ball w))
-                    (ball-y (world-ball w))
-                    (place-image RACKET (racket-x (world-racket w))
-                                        (racket-y (world-racket w))
-                                        EMPTY-SCENE))
+      (if (racket-selected? (world-racket w))
+          (place-select-ball w)
+          (place-image BALL (ball-x (world-ball w))
+                       (ball-y (world-ball w))
+                       (place-image RACKET (racket-x (world-racket w))
+                                           (racket-y (world-racket w))
+                                           EMPTY-SCENE)))
       (place-image BALL (ball-x (world-ball w))
                     (ball-y (world-ball w))
                     (place-image RACKET (racket-x (world-racket w))
@@ -1156,11 +1279,15 @@
 (define (world-with-space-toggled w)
   (if (world-ready-to-serve? w)
       (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 3 -9)
-                  (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0)
+                  (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0
+                               (racket-selected? (world-racket w))
+                               (racket-x-distance (world-racket w))
+                               (racket-y-distance (world-racket w)))
                   (update-serve-ready w)
                   (update-in-rally w)
                   (world-speed w)
-                  (world-ticks-passed w))
+                  (world-ticks-passed w)
+                  (world-select w))
       (if (world-in-rally? w)
           (pause-world w)
           w)))
@@ -1174,7 +1301,8 @@
                   (world-ready-to-serve? w)
                   (world-in-rally? w)
                   (world-speed w)
-                  (world-ticks-passed w))))
+                  (world-ticks-passed w)
+                  (world-select w))))
 
 (define (world-after-key-event w kev)
   (cond
@@ -1184,6 +1312,121 @@
          (is-down-arrow-key-event? kev)
          (is-up-arrow-key-event? kev))
      (world-with-arrow-toggled w kev)]
+    [else w]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; is-button-down-event? : MouseEvent -> Boolean
+;; GIVEN:   a MouseEvent
+;; RETURNS: true iff the MouseEvent represents a mouse down button.
+
+;; EXAMPLES:
+(define MOUSE-BUTTON-DOWN "button-down")
+
+;; STRATEGY: Check if given key event string
+;;             matches up arrow key event string.
+(define (is-button-down-event? mev)
+  (mouse=? mev MOUSE-BUTTON-DOWN))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; is-drag-event? : MouseEvent -> Boolean
+;; GIVEN:   a MouseEvent
+;; RETURNS: true iff the MouseEvent represents a mouse drag button.
+
+;; EXAMPLES:
+(define MOUSE-DRAG "drag")
+
+;; STRATEGY: Check if given key event string
+;;             matches up arrow key event string.
+(define (is-drag-event? mev)
+  (mouse=? mev MOUSE-DRAG))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; is-button-up-event? : MouseEvent -> Boolean
+;; GIVEN:   a MouseEvent
+;; RETURNS: true iff the MouseEvent represents a mouse up button.
+
+;; EXAMPLES:
+(define MOUSE-BUTTON-UP "button-up")
+
+;; STRATEGY: Check if given key event string
+;;             matches up arrow key event string.
+(define (is-button-up-event? mev)
+  (mouse=? mev MOUSE-BUTTON-UP))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; racket-after-mouse-event : Racket Int Int MouseEvent -> Racket
+;; GIVEN:   a racket, the x and y coordinates of a mouse event,
+;;            and the mouse event
+;; RETURNS: the racket as it should be after the given mouse event.
+
+;; STRATEGY:
+(define (racket-after-mouse-event racket mx my mev)
+  (cond
+    [(is-button-down-event? mev)
+     (make-racket (racket-x racket)
+                  (racket-y racket)
+                  (racket-vx racket)
+                  (racket-vy racket)
+                  (update-racket-selected racket mx my)
+                  (- mx (racket-x racket))
+                  (- my (racket-y racket)))]
+    [(is-drag-event? mev)
+     (make-racket (- mx (racket-x-distance racket))
+                  (- my (racket-y-distance racket))
+                  0
+                  0
+                  (update-racket-selected racket mx my)
+                  (racket-x-distance racket)
+                  (racket-y-distance racket))]
+    [(is-button-up-event? mev)
+     (make-racket (racket-x racket)
+                  (racket-y racket)
+                  (racket-vx racket)
+                  (racket-vy racket)
+                  #false
+                  (racket-x-distance racket)
+                  (racket-y-distance racket))]
+    [else racket]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; world-after-button-down : World Integer Integer MouseEvent-> World
+;; GIVEN:   a world, the location of the button-down and the mouse event
+;; RETURNS: the world following a button-down at the given location.
+;;            if the button-down is within 25 pixels of racket,
+;;            returns a world just like the given one,
+;;            with the select ball at the mouse location.
+
+;; STRATEGY: Cases on whether the mouse event is in the selectable
+;;             region of the racket
+;;             then use Constructor Template for World. 
+(define (world-after-button-down w mx my mev)
+  (if (and (update-racket-selected (world-racket w) mx my)
+           (world-in-rally? w))
+      (make-world (world-ball w)
+                  (racket-after-mouse-event (world-racket w)
+                                            mx my mev)
+                  (world-ready-to-serve? w)
+                  (world-in-rally? w)
+                  (world-speed w)
+                  (world-ticks-passed w)
+                  (make-select-ball mx my))
+      w))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; world-after-mouse-event : World Integer Integer MouseEvent -> World
+;; GIVEN:   a world, the x- and y-positions of the mouse, and a mouse
+;;            event. 
+;; RETURNS: the world that should follow the given mouse event
+
+;; EXAMPLES:
+
+;; STRATEGY: Cases on MouseEvent
+(define (world-after-mouse-event w mx my mev)
+  (cond
+    [(or (is-button-down-event? mev)
+         (is-drag-event? mev)
+         (is-button-up-event? mev))
+     (world-after-button-down w mx my mev)]
     [else w]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
@@ -1200,6 +1443,7 @@
 ;; STRATEGY:
 (define (simulation sim-speed)
   (big-bang (initial-world sim-speed)
+            (on-mouse world-after-mouse-event)
             (on-key world-after-key-event)
             (on-tick world-after-tick sim-speed)
             (on-draw world-to-scene)))
