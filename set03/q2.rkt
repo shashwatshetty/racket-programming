@@ -23,7 +23,7 @@
          racket-vx
          racket-vy)
 
-;; SquashPractise1
+;; SquashPractise2
 ;; Simulates squash practise. Simulation starts when the space button
 ;; is pressed. Simulation contains a squash racket and a squash ball as
 ;; objects interacting with each other and the simulation environment.
@@ -61,6 +61,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DATA DEFINITIONS:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; A Ball is represented as a struct
 ;; (make-ball x y vx vy)
@@ -182,10 +183,10 @@
 ;;         (world-select world)
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; initial-world : PosReal -> World
@@ -297,6 +298,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS MANIPULATING STATES OF THE BALL:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; ball-hitting-left-wall? : Ball -> Boolean
@@ -598,9 +600,11 @@
                  (update-ball-vx ball)
                  (update-ball-vy ball))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS MANIPULATING STATES OF THE RACKET:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; racket-hitting-left-wall? : Racket -> Boolean
@@ -725,7 +729,6 @@
                 68
       "(update-racket-x (make-racket 65 40 3 1 #false 0 0))
               should return: 68"))
-
 
 ;; STRATEGY: Cases on if ball hits walls along the x-axis.
 (define (update-racket-x racket)
@@ -893,7 +896,6 @@
               RACKET-SELECTION-HEIGHT))
        ))
 
-
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; move-racket : Ball Racket -> Racket
 ;; GIVEN:   a ball and racket
@@ -941,7 +943,6 @@
                    (racket-selected? racket)
                    (racket-x-distance racket)
                    (racket-y-distance racket))))
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1156,6 +1157,29 @@
 ;; RETURNS: the world that should follow the given world
 ;;           after a tick
 
+;; EXAMPLES:
+;; (world-after-tick WORLD-AFTER-SPACE-KEY)
+;;                           => (make-world (make-ball 333 375 3 -9)
+;;                                          (make-racket 330 384 0 0)
+;;                                          #false #true 1 1)
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (world-after-tick WORLD-AFTER-SPACE-KEY)
+                (make-world (make-ball 333 375 3 -9)
+                            (make-racket 330 384 0 0 #false 0 0)
+                            #false #true 1 1
+                            (make-select-ball 0 0))
+     "(world-after-tick WORLD-AFTER-SPACE-KEY)
+          should return: World in rally state in the next tick")
+  (check-equal? (world-after-tick WORLD-IN-PAUSE-STATE)
+                (make-world (make-ball 330 384 3 -9)
+                            (make-racket 330 384 0 0 #false 0 0)
+                            #false #false 1 1
+                            (make-select-ball 0 0))
+     "(world-after-tick WORLD-IN-PAUSE-STATE)
+          should return: World in pause state in the next tick"))
+
 ;; STRATEGY: Combine Simple Functions
 (define (world-after-tick w)
   (if (or (world-ready-to-serve? w)
@@ -1191,6 +1215,50 @@
 ;; RETURNS: a Scene that portrays the given world.
 
 ;; EXAMPLE:
+;; (world-to-scene WORLD-AFTER-SPACE-KEY)
+;;                 =>  (place-image BALL SERVE-X-CORD SERVE-Y-CORD
+;;                          (place-image RACKET SERVE-X-CORD SERVE-Y-CORD
+;;                                            EMPTY-SCENE))
+
+;; TESTS:
+;; Example For Testing
+(define WORLD-IN-SELECTED-STATE (make-world (make-ball 330 384 3 -9)
+                                            (make-racket 330 384 0 0
+                                                       #true 320 414)
+                                            #false
+                                            #true
+                                            1
+                                            0
+                                            (make-select-ball 320 414)))
+(define WORLD-IN-PAUSE-STATE (make-world (make-ball 330 384 3 -9)
+                                         (make-racket 330 384 0 0
+                                                       #false 0 0)
+                                          #false
+                                          #false
+                                          1
+                                          0
+                                          (make-select-ball 0 0)))
+(begin-for-test
+  (check-equal? (world-to-scene WORLD-AFTER-SPACE-KEY)
+                (place-image BALL SERVE-X-CORD SERVE-Y-CORD
+                    (place-image RACKET SERVE-X-CORD SERVE-Y-CORD
+                                        EMPTY-SCENE))
+     "(world-to-scene WORLD-AFTER-SPACE-KEY)
+           should return: scene in rally state")
+  (check-equal? (world-to-scene WORLD-IN-PAUSE-STATE)
+                (place-image BALL SERVE-X-CORD SERVE-Y-CORD
+                    (place-image RACKET SERVE-X-CORD SERVE-Y-CORD
+                                        PAUSED-EMPTY-SCENE))
+     "(world-to-scene WORLD-IN-PAUSE-STATE)
+           should return: scene in paused state")
+  (check-equal? (world-to-scene WORLD-IN-SELECTED-STATE)
+                (place-image BALL SERVE-X-CORD SERVE-Y-CORD
+                  (place-image SELECT-BALL 320 414
+                    (place-image RACKET
+                         SERVE-X-CORD SERVE-Y-CORD
+                         EMPTY-SCENE)))
+     "(world-to-scene WORLD-IN-SELECTED-STATE)
+           should return: scene in selected state"))
 
 ;; STRATEGY: Place the image of the Ball & Racket on an empty canvas
 ;;             depending on if world state is paused or no.
@@ -1211,6 +1279,11 @@
                                         PAUSED-EMPTY-SCENE))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FUNCTIONS HANDLING KEY EVENTS:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; is-space-key-event? : KeyEvent -> Boolean
 ;; GIVEN:   a KeyEvent
@@ -1218,6 +1291,14 @@
 
 ;; EXAMPLES:
 (define SPACE-KEY " ")
+;; (is-space-key-event? SPACE-KEY) => #true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (is-space-key-event? SPACE-KEY)
+                #true
+     "(is-space-key-event? SPACE-KEY)
+          should return: true"))
 
 ;; STRATEGY: Check if given key event string
 ;;             matches spacebar key event string.
@@ -1231,6 +1312,14 @@
 
 ;; EXAMPLES:
 (define LEFT-ARROW-KEY "left")
+;; (is-left-arrow-key-event? LEFT-ARROW-KEY) => #true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (is-left-arrow-key-event? LEFT-ARROW-KEY)
+                #true
+     "(is-left-arrow-key-event? LEFT-ARROW-KEY)
+          should return: true"))
 
 ;; STRATEGY: Check if given key event string
 ;;             matches left arrow key event string.
@@ -1244,6 +1333,14 @@
 
 ;; EXAMPLES:
 (define RIGHT-ARROW-KEY "right")
+;; (is-right-arrow-key-event? RIGHT-ARROW-KEY) => #true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (is-right-arrow-key-event? RIGHT-ARROW-KEY)
+                #true
+     "(is-right-arrow-key-event? RIGHT-ARROW-KEY)
+          should return: true"))
 
 ;; STRATEGY: Check if given key event string
 ;;             matches right arrow key event string.
@@ -1257,6 +1354,14 @@
 
 ;; EXAMPLES:
 (define DOWN-ARROW-KEY "down")
+;; (is-down-arrow-key-event? DOWN-ARROW-KEY) => #true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (is-down-arrow-key-event? DOWN-ARROW-KEY)
+                #true
+     "(is-down-arrow-key-event? DOWN-ARROW-KEY)
+          should return: true"))
 
 ;; STRATEGY: Check if given key event string
 ;;             matches down arrow key event string.
@@ -1270,29 +1375,99 @@
 
 ;; EXAMPLES:
 (define UP-ARROW-KEY "up")
+;; (is-up-arrow-key-event? UP-ARROW-KEY) => #true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (is-up-arrow-key-event? UP-ARROW-KEY)
+                #true
+     "(is-up-arrow-key-event? UP-ARROW-KEY)
+          should return: true"))
 
 ;; STRATEGY: Check if given key event string
 ;;             matches up arrow key event string.
 (define (is-up-arrow-key-event? ke)
   (key=? ke UP-ARROW-KEY))
 
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; world-with-space-toggled : World -> World
+;; GIVEN:   a world
+;; RETURNS: the world that should follow the given world
+;;           after the space key is toggled.
+
+;; EXAMPLES:
+;; (world-with-space-toggled (initial-world 1))
+;;                       => (make-world (make-ball 330 384 3 -9)
+;;                                      (make-racket 330 384 0 0 #false 0 0)
+;;                                      #false
+;;                                      #true
+;;                                      1
+;;                                      0
+;;                                      (make-select-ball 0 0))
+
+;; TESTS:
+;; Example For Testing:
+(define WORLD-AFTER-SPACE-KEY (make-world (make-ball 330 384 3 -9)
+                                          (make-racket 330 384 0 0 #false 0 0)
+                                          #false
+                                          #true
+                                          1
+                                          0
+                                          (make-select-ball 0 0)))
+(begin-for-test
+  (check-equal? (world-with-space-toggled WORLD-AFTER-SPACE-KEY)
+                WORLD-IN-PAUSE-STATE))
 (define (world-with-space-toggled w)
-  (if (world-ready-to-serve? w)
-      (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 3 -9)
-                  (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0
-                               (racket-selected? (world-racket w))
-                               (racket-x-distance (world-racket w))
-                               (racket-y-distance (world-racket w)))
-                  (update-serve-ready w)
-                  (update-in-rally w)
-                  (world-speed w)
-                  (world-ticks-passed w)
-                  (world-select w))
-      (if (world-in-rally? w)
-          (pause-world w)
-          w)))
+  (cond
+    [(world-ready-to-serve? w)
+     (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 3 -9)
+                 (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0
+                              (racket-selected? (world-racket w))
+                              (racket-x-distance (world-racket w))
+                              (racket-y-distance (world-racket w)))
+                 (update-serve-ready w)
+                 (update-in-rally w)
+                 (world-speed w)
+                 (world-ticks-passed w)
+                 (world-select w))]
+   [(world-in-rally? w) (pause-world w)]))
 
+;; CONTRACT & PURPOSE STATEMENTS:
+;; world-with-arrow-toggled : World KeyEvent -> World
+;; GIVEN:   a world and a KeyEvent
+;; RETURNS: the world that should follow the given world
+;;           after the arrow key event.
 
+;; EXAMPLES:
+;; (world-with-arrow-toggled WORLD-AFTER-SPACE-KEY LEFT-KEY)
+;;                  =>  (make-world (make-ball 330 384 3 -9)
+;;                                  (make-racket 330 384 -1 0 #false 0 0)
+;;                                  #false
+;;                                  #true
+;;                                  1
+;;                                  0
+;;                                  (make-select-ball 0 0))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (world-with-arrow-toggled (initial-world 1)
+                                          ANY-OTHER-KEY)
+                (initial-world 1)
+      "(world-with-arrow-toggled (initial-world 1))
+           should return: (initial-world 1)")
+  (check-equal? (world-with-arrow-toggled
+                 WORLD-AFTER-SPACE-KEY
+                 LEFT-ARROW-KEY)
+                (make-world (make-ball 330 384 3 -9)
+                            (make-racket 330 384 -1 0 #false 0 0)
+                            #false
+                            #true
+                            1
+                            0
+                            (make-select-ball 0 0))
+      "(world-with-arrow-toggled (initial-world 1))
+           should return: (initial-world 1)"))
 (define (world-with-arrow-toggled w ke)
   (if (world-ready-to-serve? w)
       w
@@ -1304,6 +1479,94 @@
                   (world-ticks-passed w)
                   (world-select w))))
 
+;; CONTRACT & PURPOSE STATEMENTS:
+;; world-after-key-event : World KeyEvent -> World
+;; GIVEN:   a world and a KeyEvent
+;; RETURNS: the world that should follow the given world
+;;           after the given key event.
+
+;; EXAMPLES:
+;; (world-after-key-event (initial-world 1) SPACE-KEY)
+;;                  =>  (make-world (make-ball 330 384 3 -9)
+;;                                  (make-racket 330 384 0 0 #false 0 0)
+;;                                  #false
+;;                                  #true
+;;                                  1
+;;                                  0
+;;                                  (make-select-ball 0 0))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (world-after-key-event (initial-world 1) SPACE-KEY)
+                WORLD-AFTER-SPACE-KEY
+    "(world-after-key-event
+            (World in initial ready to serve state SPACE-KEY)
+                should return World in rally state")
+  (check-equal? (world-after-key-event
+                 WORLD-AFTER-SPACE-KEY
+                 LEFT-ARROW-KEY)
+                (make-world (make-ball 330 384 3 -9)
+                            (make-racket 330 384 -1 0 #false 0 0)
+                            #false
+                            #true
+                            1
+                            0
+                            (make-select-ball 0 0))
+    "(world-after-key-event
+          (World in initial ready to serve state LEFT-ARROW-KEY)
+               should return World with decreased vx of racket")
+  (check-equal? (world-after-key-event
+                 WORLD-AFTER-SPACE-KEY
+                 RIGHT-ARROW-KEY)
+                (make-world (make-ball 330 384 3 -9)
+                            (make-racket 330 384 1 0 #false 0 0)
+                            #false
+                            #true
+                            1
+                            0
+                            (make-select-ball 0 0))
+    "(world-after-key-event
+          (World in initial ready to serve state RIGHT-ARROW-KEY)
+               should return World with increased vx of racket")
+  (check-equal? (world-after-key-event
+                 WORLD-AFTER-SPACE-KEY
+                 DOWN-ARROW-KEY)
+                (make-world (make-ball 330 384 3 -9)
+                            (make-racket 330 384 0 1 #false 0 0)
+                            #false
+                            #true
+                            1
+                            0
+                            (make-select-ball 0 0))
+    "(world-after-key-event
+          (World in initial ready to serve state DOWN-ARROW-KEY)
+               should return World with increased vx of racket")
+  (check-equal? (world-after-key-event
+                 WORLD-AFTER-SPACE-KEY
+                 UP-ARROW-KEY)
+                (make-world (make-ball 330 384 3 -9)
+                            (make-racket 330 384 0 -1 #false 0 0)
+                            #false
+                            #true
+                            1
+                            0
+                            (make-select-ball 0 0))
+    "(world-after-key-event
+          (World in initial ready to serve state UP-ARROW-KEY)
+               should return World with decreased vy of racket")
+  (check-equal? (world-after-key-event
+                 WORLD-AFTER-SPACE-KEY
+                 ANY-OTHER-KEY)
+                (make-world (make-ball 330 384 3 -9)
+                             (make-racket 330 384 0 0 #false 0 0)
+                             #false
+                             #true
+                             1
+                             0
+                             (make-select-ball 0 0))
+    "(world-after-key-event
+          (World in initial ready to serve state ANY-OTHER-KEY)
+               should return World with decreased vy of racket"))
 (define (world-after-key-event w kev)
   (cond
     [(is-space-key-event? kev) (world-with-space-toggled w)]
@@ -1313,6 +1576,12 @@
          (is-up-arrow-key-event? kev))
      (world-with-arrow-toggled w kev)]
     [else w]))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FUNCTIONS HANDLING MOUSE EVENTS:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; is-button-down-event? : MouseEvent -> Boolean
@@ -1358,6 +1627,22 @@
 ;; GIVEN:   a racket, the x and y coordinates of a mouse event,
 ;;            and the mouse event
 ;; RETURNS: the racket as it should be after the given mouse event.
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (racket-after-mouse-event
+                    (make-racket 330 384 0 0 #true 320 394)
+                    310 414 MOUSE-DRAG)
+                (make-racket -10 20 0 0 #false 320 394)
+     "When (racket-after-mouse-event is given a selected racket
+          and drag mouse event) should return: racket at new
+              location relative to selection point")
+  (check-equal? (racket-after-mouse-event
+                    (make-racket 330 384 0 0 #false 0 0)
+                    310 414 ANY-OTHER-MOUSE)
+                (make-racket 330 384 0 0 #false 0 0)
+     "When (racket-after-mouse-event is given a selected racket)
+          should return: same racket"))
 
 ;; STRATEGY:
 (define (racket-after-mouse-event racket mx my mev)
@@ -1419,6 +1704,46 @@
 ;; RETURNS: the world that should follow the given mouse event
 
 ;; EXAMPLES:
+(define ANY-OTHER-MOUSE "move")
+;; (world-after-mouse-event WORLD-AFTER-SPACE-KEY
+;;                          340 394 MOUSE-BUTTON-DOWN)
+;;                             => (make-world (make-ball 330 384 3 -9)
+;;                                            (make-racket 330 384 0 0
+;;                                                         #true 10 10)
+;;                                            #false #true 1 0
+;;                                           (make-select-ball 340 394))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (world-after-mouse-event WORLD-AFTER-SPACE-KEY
+                                         340 394 MOUSE-BUTTON-DOWN)
+                (make-world (make-ball 330 384 3 -9)
+                            (make-racket 330 384 0 0 #true 10 10)
+                            #false #true 1 0
+                            (make-select-ball 340 394))
+    "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
+           340 394 MOUSE-BUTTON-DOWN) should return: world with
+               racket selected")
+  (check-equal? (world-after-mouse-event (initial-world 1)
+                                         340 394 MOUSE-BUTTON-DOWN)
+                (make-world (make-ball 330 384 0 0)
+                            (make-racket 330 384 0 0 #false 0 0)
+                            #true #false 1 0 (make-select-ball 0 0))
+    "(world-after-mouse-event (initial-world 1)
+           340 394 MOUSE-BUTTON-DOWN) should return: the same world")
+  (check-equal? (world-after-mouse-event WORLD-AFTER-SPACE-KEY
+                                         340 394 MOUSE-BUTTON-UP)
+                (make-world (make-ball 330 384 3 -9)
+                            (make-racket 330 384 0 0 #false 0 0)
+                            #false #true 1 0 (make-select-ball 340 394))
+    "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
+           340 394 MOUSE-BUTTON-DOWN) should return: the world
+                 after racket selection is over")
+  (check-equal? (world-after-mouse-event WORLD-AFTER-SPACE-KEY
+                                         340 394 ANY-OTHER-MOUSE)
+                WORLD-AFTER-SPACE-KEY
+    "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
+           340 394 MOUSE-BUTTON-DOWN) should return: the same world"))
 
 ;; STRATEGY: Cases on MouseEvent
 (define (world-after-mouse-event w mx my mev)
@@ -1428,6 +1753,12 @@
          (is-button-up-event? mev))
      (world-after-button-down w mx my mev)]
     [else w]))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MAIN FUNCTION:
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; simulation : PosReal -> World
