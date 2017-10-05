@@ -1,0 +1,43 @@
+TA-1 Name: Rohan
+TA-2 Name: Yasaman
+
+Student CCIS ID: sha5hw4t
+
+Problem Set #: set03
+Question Codewalked: -
+
+Design Grade: - A
+Presentation Grade: - A
+
+================
+
+Data Design:
+
+-- coordinates must be Integer - in all data definitions
+
+-- ticks-passed should br NonNegInt
+
+================
+
+Contract/Purpose Statement/Design Strategy:
+
+-- design strategy should mention "using template for <DataType> on <Variable Name>". 
+
+-- should handle else condition
+
+================
+
+Presentation:
+
+Good
+
+================
+
+Other:
+
+
+================
+
+
+
+
