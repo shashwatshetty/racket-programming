@@ -21,7 +21,10 @@
          racket-x
          racket-y
          racket-vx
-         racket-vy)
+         racket-vy
+         world-after-mouse-event
+         racket-after-mouse-event
+         racket-selected?)
 
 ;; SquashPractise2
 ;; Simulates squash practise. Simulation starts when the space button
