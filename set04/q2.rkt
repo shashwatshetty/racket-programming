@@ -1020,7 +1020,8 @@
 ;;            and the mouse event
 ;; RETURNS: the updated value of if the racket is selected.
 
-;; STRATEGY:
+;; STRATEGY: Check if mouse pointer lies within
+;;             racket selection region
 (define (update-racket-selected racket mx my)
   (and (<= (- (+ (racket-x racket) (racket-vx racket))
               RACKET-MID-LENGTH)
@@ -1152,7 +1153,7 @@
                                         1
                                         4
                                         (make-select-ball 0 0)))
-                (make-world (list (make-ball 20 645 3 9))
+                (make-world empty
                             (make-racket 330 384 0 0 #false 0 0)
                             #false
                             #false
@@ -1200,7 +1201,7 @@
 ;; STRATEGY: Divide into simple functions
 ;;             and Use Constructor Template for World.
 (define (pause-world w)
-  (make-world (world-balls w)
+  (make-world (disappear-ball (world-balls w))
               (world-racket w)
               (world-ready-to-serve? w)
               (update-in-rally w)
@@ -1241,7 +1242,8 @@
      "(disappear-ball-world WORLD-2BALLS-IN-RALLY-STATE)
            should return: World with 2 ballsin the list in the next tick"))
 
-;; STRATEGY:
+;; STRATEGY: Use Constructor Template for World
+;;               on w
 (define (disappear-ball-world w)
   (if (empty? (rest (world-balls w)))
       (pause-world w)
@@ -1344,7 +1346,7 @@
 ;; world-after-tick : World -> World
 ;; GIVEN:   any world that's possible for the simulation
 ;; RETURNS: the world that should follow the given world
-;;           after a tick
+;;           after a tick.
 
 ;; EXAMPLES:
 ;; (world-after-tick WORLD-AFTER-SPACE-KEY)
@@ -1402,6 +1404,8 @@
 ;;            racket in the rally/ready to serve state.
 
 ;; EXAMPLE:
+;; (place-racket-in-rally WORLD-AFTER-SPACE-KEY)
+;;                         => Places the Racket on empty scene
 
 ;; STRATEGY: Place the image of the Racket on an empty canvas.
 (define (place-racket-in-rally w)
@@ -1699,8 +1703,8 @@
 ;;           after the space key is toggled.
 
 ;; EXAMPLES:
-
-;; TESTS:
+;; (world-with-b-toggled WORLD-AFTER-SPACE-KEY)
+;;                          =>  World having 2 balls
 
 ;; STRATEGY: Cases on state of the world.
 (define (world-with-b-toggled w)
@@ -1945,7 +1949,7 @@
      "When (racket-after-mouse-event is given a selected racket)
           should return: same racket"))
 
-;; STRATEGY:
+;; STRATEGY: Cases on mouse event.
 (define (racket-after-mouse-event racket mx my mev)
   (cond
     [(is-button-down-event? mev)
@@ -2113,7 +2117,7 @@
 ;;(simulation 1) runs in super slow motion
 ;;(simulation 1/24) runs at a more realistic speed
 
-;; STRATEGY:
+;; STRATEGY: Combine simple functions.
 (define (simulation sim-speed)
   (big-bang (initial-world sim-speed)
             (on-mouse world-after-mouse-event)

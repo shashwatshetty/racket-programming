@@ -34,20 +34,15 @@
     [else (... (first s)
                (il-fn (rest s)))]))
 
-;; A SortedIntList is an IntList in which the numbers 
-;; are sorted in ascending order.
-
-;; A sorted sequence of integers (SortedIntList) is represented
-;; as a list of integers. 
+;; A sequence of a sequence of integers (IntListList) is represented
+;;                    as a list of a list integers.
 
 ;; CONSTRUCTOR TEMPLATES:
 ;; empty                      -- the empty sequence
 ;; (cons n seq)
 ;;   WHERE:
-;;    n   : Integer           is the first integer in the sequence
-;;    seq : SortedIntList     is the the rest of the sequence
-;;   AND:
-;;    n is less than any number in seq.
+;;    n   : IntList       is the first sequence of integers in the sequence
+;;    seq : IntListList   is the the rest of the sequence
 
 ;; OBSERVER TEMPLATE:
 ;; Same as for IntList.
@@ -118,66 +113,6 @@
 (define (equal-length? list1 list2)
   (= (length list1)
              (length list2)))
-
-;; CONTRACT & PURPOSE STATEMENTS:
-;; insert : Integer SortedIntList -> SortedIntList
-;; GIVEN:   An integer and a sorted sequence
-;; RETURNS: A new SortedIntList just like the original, but with the
-;;             new integer inserted.
-
-;; EXAMPLES:
-;; (insert 3 empty)           => (list 3)
-;; (insert 3 (list 5 6))      => (list 3 5 6)
-;; (insert 3 (list -1 1 5 6)) => (list -1 1 3 5 6)
-
-;; TESTS:
-(begin-for-test
-  (check-equal? (insert 5 (list))
-                (list 5)
-    "(insert 5 (list)) should return: (list 5)")
-  (check-equal? (insert 5 (list 1 7 9))
-                (list 1 5 7 9)
-    "(insert 5 (list 1 7 9)) should return: (list 1 5 7 9)"))
-
-;; STRATEGY: Use Observer Template for SortedIntList
-;;               on seq.
-(define (insert n seq)
-  (cond
-    [(empty? seq) (cons n empty)]
-    [(< n (first seq)) (cons n seq)]
-    [else (cons (first seq)
-                (insert n (rest seq)))]))
-
-;; CONTRACT & PURPOSE STATEMENTS:
-;; sort-list : IntList -> SortedIntList
-;; GIVEN:   An integer sequence
-;; RETURNS: The same sequence, only sorted by <= .
-
-;; TESTS:
-(begin-for-test
-  (check-equal? (sort-list empty)
-                empty
-    "(sort-list empty) should return: empty")
-  (check-equal? (sort-list (list 3))
-                (list 3)
-    "(sort-list (list 3)) should return: (list 3)")
-  (check-equal? (sort-list (list 2 1 4))
-                (list 1 2 4)
-    "(sort-list (list 2 1 4))
-            should return: (list 1 2 4)"))
-
-;; EXAMPLES:
-;; (sort-list empty) = empty
-;; (sort-list (list 3)) = (list 3)
-;; (sort-list (list 2 1 4)) = (list 1 2 4)
-;; (sort-list (list 2 1 4 2)) = (list 1 2 2 4)
-
-;; STRATEGY: Use observer template for IntList
-(define (sort-list ints)
-  (cond
-    [(empty? ints) empty]
-    [else (insert (first ints)
-                  (sort-list (rest ints)))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; permutation-of? : IntList IntList -> Boolean
@@ -277,8 +212,112 @@
     [else (shortlex-less-than? (rest list1)
                                (rest list2))]))
 
+;; CONTRACT & PURPOSE STATEMENTS:
+;; new-start : IntList PosInt -> IntList
+;; GIVEN:   a list of integers and the index
+;; RETURNS: a list with the integer at given index at
+;;            the start of the list.
+(define (new-start og-list indx)
+  (cons (list-ref og-list indx)
+        (remove (list-ref og-list indx) og-list)))
 
-;; STRATEGY: Use Observer Template for IntList
-;;              on list1 and list2.
+;; CONTRACT & PURPOSE STATEMENTS:
+;; swap : IntList Int Int -> IntList
+;; GIVEN:   a list of integers and two elements in that list
+;; RETURNS: a list with the two elements swapped with each other.
+(define (swap ilist e1 e2)
+  (cond
+    [(empty? ilist)
+     empty]
+    [(= (first ilist) e1)
+     (list* e2 (swap (rest ilist) e1 e2))]
+    [(= (first ilist) e2)
+     (list* e1 (swap (rest ilist) e1 e2))]
+    [else
+     (list* (first ilist) (swap (rest ilist) e1 e2))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; permute : IntList IntList Int Int -> IntListList
+;; GIVEN:   two lists of integers and two index references
+;; RETURNS: a list with the permutations of the first list
+;;             with the start element changed.
+(define (permute og-list new-list ref1 ref2)
+  (cond
+    [(= (list-ref og-list (- (length og-list) 1))
+        (list-ref new-list ref1))
+     (list* new-list (permute-last-two og-list
+                                       (new-start og-list ref1)
+                                       (- ref1 1) (- ref2 1)))]
+    [else
+     (list* new-list (permute-last-two og-list
+                                       (new-start og-list ref1)
+                                       ref1 (- ref2 1)))]))
+
+
+;; (permute-last-two (list 1 2) (list 1 2) 0 1)
+;; (permute-last-two (list 1 2 3) (list 1 2 3) 1 2)
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; permute-last-two : IntList IntList Int Int -> IntListList
+;; GIVEN:   two lists of integers and two index references
+;; RETURNS: a list with the permutations of the first list
+;;              with only the last two digits considered.
+(define (permute-last-two og-list new-list ref1 ref2)
+  (cond
+    [(< ref1 0)
+     empty]
+    [(= (length new-list) ref2)
+     (permute og-list new-list ref1 ref2)]
+    [else
+     (list* new-list (permute-last-two og-list
+                                       (swap og-list
+                                             (list-ref new-list ref2)
+                                             (list-ref new-list (- ref2 1)))
+                                       ref1 (+ 1 ref2)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; permutations : IntList IntList Int Int -> IntListList
+;; GIVEN:   two lists of integers and two index references
+;; RETURNS: a list with the permutations of the first list
+
+;; EXAMPLES:
+;; (permutations (list))       => (list (list))
+;; (permutations (list 9))     => (list (list 9))
+;; (permutations (list 3 1 2)) => (list (list 1 2 3)
+;;                                      (list 1 3 2)
+;;                                      (list 2 1 3)
+;;                                      (list 2 3 1)
+;;                                      (list 3 1 2)
+;;                                      (list 3 2 1))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (permutations (list))
+                (list (list))
+     "(permutations (list))
+         should return: (list (list))")
+  (check-equal? (permutations (list 9))
+                (list (list 9))
+     "(permutations (list 9))
+         should return: (list (list 9))")
+  (check-equal? (permutations (list 1 2 3))
+                (list (list 1 2 3)
+                      (list 1 3 2)
+                      (list 2 1 3)
+                      (list 3 2 1))
+     "(permutations (permutations (list 1 2 3))
+         should return: (list (list 1 2 3)
+                              (list 1 3 2)
+                              (list 2 1 3)
+                              (list 3 2 1))"))
+
+;; STRATEGY: Cases on length of list.
 (define (permutations lst)
-  (+ 1 2))
+  (cond
+    [(or (empty? lst)
+         (= (length lst) 1))
+     (list lst)]
+    [else
+     (permute-last-two lst lst
+                       (- (length lst) 2)
+                       (- (length lst) 1))]))
