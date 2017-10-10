@@ -1,0 +1,29 @@
+--------------------
+q1 > Test #13
+
+name:        check-equal?
+location:    q1-bb.rkt:109:4
+expression:  (check-equal? (shortlex-less-than? (list 1 1 1 1 1) (list 1 1 1 0 2)) false "shortlex-less-than? fn should return false")
+params:      '(#true #false)
+message:     "shortlex-less-than? fn should return false"
+actual:      #true
+expected:    #false
+--------------------
+--------------------
+q1 > Test #15
+first: expects a non-empty list; given: '()
+
+first: expected argument of type <non-empty list>; given: '()
+--------------------
+--------------------
+q1 > Test #17
+terminate break
+
+terminate break
+--------------------
+16 success(es) 1 failure(s) 2 error(s) 19 test(s) run
+extras.rkt Wed Sep 14 08:52:19 2016
+q1.rkt appears to be in a correctly named folder. Running tests...
+Running tests from q1.rkt...
+All tests passed (16 tests).
+3
