@@ -1,0 +1,39 @@
+TA-1 Name: - Sushant Pritmani
+TA-2 Name: - Preethi Chavely
+
+Student CCIS ID: sha5hw4t
+
+Problem Set #: set04
+Question Codewalked: - q2
+
+Design Grade: - AB
+Presentation Grade: - A
+
+================
+
+Data Design:
+
+--- incorrect contract. Should be Integer instead of NonNegInt. Should be PosReal instead of NonNegReal
+
+================
+
+Contract/Purpose Statement/Design Strategy:
+
+--- incorrect contracts.
+
+--- The datatypes should be Integer not Real.
+
+--- Break into helper functions, when necessary
+
+================
+
+Presentation:
+
+-- student has no difficulty answering questions
+
+================
+
+Other:
+
+
+================
