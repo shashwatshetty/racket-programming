@@ -1,3437 +1,820 @@
-#reader(lib"read.ss""wxme")WXME0108 ## 
-#|
-   This file uses the GRacket editor format.
-   Open this file in DrRacket version 6.10 or later to read it.
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-reader.ss" "lang")((modname q2) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+(require rackunit)
+(require "extras.rkt")
+(check-location "05" "q2.rkt")
 
-   Most likely, it was created by saving a program in DrRacket,
-   and it probably contains a program with non-text elements
-   (such as images or comment boxes).
+(provide lit
+         literal-value
+         literal?
+         op
+         operation-name
+         operation?
+         var
+         variable-name
+         variable?
+         call-operator
+         call-operands
+         call
+         call?
+         block
+         block-var
+         block-rhs
+         block-body
+         block?
+         constant-expression?
+         variables-used-by
+         variables-defined-by)
 
-            http://racket-lang.org/
-|#
- 33 7 #"wxtext\0"
-3 1 6 #"wxtab\0"
-1 1 8 #"wximage\0"
-2 0 8 #"wxmedia\0"
-4 1 34 #"(lib \"syntax-browser.ss\" \"mrlib\")\0"
-1 0 36 #"(lib \"cache-image-snip.ss\" \"mrlib\")\0"
-1 0 68
-(
- #"((lib \"image-core.ss\" \"mrlib\") (lib \"image-core-wxme.rkt\" \"mr"
- #"lib\"))\0"
-) 1 0 16 #"drscheme:number\0"
-3 0 44 #"(lib \"number-snip.ss\" \"drscheme\" \"private\")\0"
-1 0 36 #"(lib \"comment-snip.ss\" \"framework\")\0"
-1 0 93
-(
- #"((lib \"collapsed-snipclass.ss\" \"framework\") (lib \"collapsed-sni"
- #"pclass-wxme.ss\" \"framework\"))\0"
-) 0 0 43 #"(lib \"collapsed-snipclass.ss\" \"framework\")\0"
-0 0 19 #"drscheme:sexp-snip\0"
-0 0 29 #"drscheme:bindings-snipclass%\0"
-1 0 101
-(
- #"((lib \"ellipsis-snip.rkt\" \"drracket\" \"private\") (lib \"ellipsi"
- #"s-snip-wxme.rkt\" \"drracket\" \"private\"))\0"
-) 2 0 88
-(
- #"((lib \"pict-snip.rkt\" \"drracket\" \"private\") (lib \"pict-snip.r"
- #"kt\" \"drracket\" \"private\"))\0"
-) 0 0 55
-#"((lib \"snip.rkt\" \"pict\") (lib \"snip-wxme.rkt\" \"pict\"))\0"
-1 0 34 #"(lib \"bullet-snip.rkt\" \"browser\")\0"
-0 0 25 #"(lib \"matrix.ss\" \"htdp\")\0"
-1 0 22 #"drscheme:lambda-snip%\0"
-1 0 29 #"drclickable-string-snipclass\0"
-0 0 26 #"drracket:spacer-snipclass\0"
-0 0 57
-#"(lib \"hrule-snip.rkt\" \"macro-debugger\" \"syntax-browser\")\0"
-1 0 26 #"drscheme:pict-value-snip%\0"
-0 0 45 #"(lib \"image-snipr.ss\" \"slideshow\" \"private\")\0"
-1 0 38 #"(lib \"pict-snipclass.ss\" \"slideshow\")\0"
-2 0 55 #"(lib \"vertical-separator-snip.ss\" \"stepper\" \"private\")\0"
-1 0 18 #"drscheme:xml-snip\0"
-1 0 31 #"(lib \"xml-snipclass.ss\" \"xml\")\0"
-1 0 21 #"drscheme:scheme-snip\0"
-2 0 34 #"(lib \"scheme-snipclass.ss\" \"xml\")\0"
-1 0 10 #"text-box%\0"
-1 0 32 #"(lib \"text-snipclass.ss\" \"xml\")\0"
-1 0 1 6 #"wxloc\0"
-          0 0 69 0 1 #"\0"
-0 75 1 #"\0"
-0 10 90 -1 90 -1 3 -1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 255 255 255 1 -1 0 9
-#"Standard\0"
-0 75 12 #"Courier New\0"
-0 10 90 -1 90 -1 3 -1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 255 255 255 1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 -1 -1 2 24
-#"framework:default-color\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 150 0 150 0 0 0 -1 -1 2 15
-#"text:ports out\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 150 0 150 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 93 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 255 0 0 0 0 0 -1
--1 2 15 #"text:ports err\0"
-0 -1 1 #"\0"
-1 0 -1 -1 93 -1 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 175 0 0 0 -1 -1 2 17
-#"text:ports value\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 175 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1.0 0 92 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 34 139 34 0 0 0 -1
--1 2 27 #"Matching Parenthesis Style\0"
-0 -1 1 #"\0"
-1.0 0 92 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 34 139 34 0 0 0 -1
--1 2 1 #"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 38 38 128 0 0 0 -1 -1 2 37
-#"framework:syntax-color:scheme:symbol\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 38 38 128 0 0 0 -1 -1 2 38
-#"framework:syntax-color:scheme:keyword\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 38 38 128 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 194 116 31 0 0 0 -1 -1 2
-38 #"framework:syntax-color:scheme:comment\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 194 116 31 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 37
-#"framework:syntax-color:scheme:string\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 35
-#"framework:syntax-color:scheme:text\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 39
-#"framework:syntax-color:scheme:constant\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 132 60 36 0 0 0 -1 -1 2 49
-#"framework:syntax-color:scheme:hash-colon-keyword\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 132 60 36 0 0 0 -1 -1 2 42
-#"framework:syntax-color:scheme:parenthesis\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 132 60 36 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 36
-#"framework:syntax-color:scheme:error\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 36
-#"framework:syntax-color:scheme:other\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 16
-#"Misspelled Text\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 81 112 203 0 0 0 -1 -1 2
-38 #"drracket:check-syntax:lexically-bound\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 81 112 203 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 178 34 34 0 0 0 -1 -1 2 28
-#"drracket:check-syntax:set!d\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 178 34 34 0 0 0 -1 -1 2 37
-#"drracket:check-syntax:unused-require\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 36
-#"drracket:check-syntax:free-variable\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 68 0 203 0 0 0 -1 -1 2 31
-#"drracket:check-syntax:imported\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 68 0 203 0 0 0 -1 -1 2 47
-#"drracket:check-syntax:my-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 178 34 34 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 116 0 0 0 0 -1 -1 2 50
-#"drracket:check-syntax:their-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 116 0 0 0 0 -1 -1 2 48
-#"drracket:check-syntax:unk-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 139 142 28 0 0 0 -1 -1 2
-49 #"drracket:check-syntax:both-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 139 142 28 0 0 0 -1 -1 2
-26 #"plt:htdp:test-coverage-on\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 1 0 0 0 0 0 0 255 165 0 0 0 0 -1 -1 2 27
-#"plt:htdp:test-coverage-off\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 1 0 0 0 0 0 0 255 165 0 0 0 0 -1 -1 4 1
-#"\0"
-0 70 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 4 4 #"XML\0"
-0 70 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 2 37 #"plt:module-language:test-coverage-on\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 38
-#"plt:module-language:test-coverage-off\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 1 0 0 0 0 0 0 255 165 0 0 0 0 -1 -1 4 1
-#"\0"
-0 71 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 4 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 1 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 0 255 0 0 0 -1
--1 4 1 #"\0"
-0 71 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 1 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 0 255 0 0 0 -1
--1 4 1 #"\0"
-0 71 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 100 0 0 0 0 -1
--1 0 1 #"\0"
-0 75 12 #"Courier New\0"
-0.0 10 90 -1 90 -1 3 -1 0 1 0 1 0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 1 -1 2 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0.0 0.0 0.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 2 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0.0 0.0 0.0 1.0 1.0 1.0 150 0 150 0
-0 0 -1 -1 2 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 93 -1 -1 -1 0 1 0 0 0 0 0.0 0.0 0.0 1.0 1.0 1.0 255 0 0 0 0
-0 -1 -1 2 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0.0 0.0 0.0 1.0 1.0 1.0 0 0 175 0 0
-0 -1 -1 17 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 1 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 -1 -1 24 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 1 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 -1 -1 44 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 1 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 -1 -1 46 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 1 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 -1 -1 15 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 1 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 -1 -1 4 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 92 -1 -1 -1 -1 -1 0 0 0 0 0 1 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 0 -1 -1 14 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 1 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 -1 -1 19 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 1 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 -1 -1 4 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 1 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0 0 255
-255 255 -1 -1           0 3014 0 4 3 85
-(
- #";; The first three lines of this file were inserted by DrRacket. The"
- #"y record metadata"
-) 0 0 4 29 1 #"\n"
-0 0 4 3 85
-(
- #";; about the language level of this file in a form that our tools ca"
- #"n easily process."
-) 0 0 4 29 1 #"\n"
-0 0 4 3 176
-(
- #"#reader(lib \"htdp-intermediate-reader.ss\" \"lang\")((modname q2) ("
- #"read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t construc"
- #"tor repeating-decimal #f #t none #f () #f)))"
-) 0 0 4 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 7 #"require"
-0 0 24 3 1 #" "
-0 0 14 3 8 #"rackunit"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 7 #"require"
-0 0 24 3 1 #" "
-0 0 19 3 12 #"\"extras.rkt\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 14 3 14 #"check-location"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"05\""
-0 0 24 3 1 #" "
-0 0 19 3 8 #"\"q2.rkt\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 14 3 7 #"provide"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"lit"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 13 #"literal-value"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 8 #"literal?"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 2 #"op"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 14 #"operation-name"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 10 #"operation?"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 3 #"var"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 13 #"variable-name"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 9 #"variable?"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 13 #"call-operator"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 13 #"call-operands"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 4 #"call"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 5 #"call?"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 5 #"block"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 9 #"block-var"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 9 #"block-rhs"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 10 #"block-body"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 6 #"block?"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 20 #"constant-expression?"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 17 #"variables-used-by"
-0 0 24 29 1 #"\n"
-0 0 24 3 9 #"         "
-0 0 14 3 20 #"variables-defined-by"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 26 #";;;;;;;;;;;;;;;;;;;;;;;;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 20 #";; DATA DEFINITIONS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 26 #";;;;;;;;;;;;;;;;;;;;;;;;;;"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; An ArithmeticExpression is one of"
-0 0 24 29 1 #"\n"
-0 0 17 3 19 #";;     -- a Literal"
-0 0 24 29 1 #"\n"
-0 0 17 3 20 #";;     -- a Variable"
-0 0 24 29 1 #"\n"
-0 0 17 3 22 #";;     -- an Operation"
-0 0 24 29 1 #"\n"
-0 0 17 3 16 #";;     -- a Call"
-0 0 24 29 1 #"\n"
-0 0 17 3 17 #";;     -- a Block"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; OBSERVER TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 56 #";; arithmetic-expression-fn : ArithmeticExpression -> ??"
-0 0 24 29 1 #"\n"
-0 0 17 3 2 #"#;"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 24 #"arithmetic-expression-fn"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 3 3 #" (("
-0 0 14 3 8 #"literal?"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 10 #"        (("
-0 0 14 3 9 #"variable?"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 10 #"        (("
-0 0 14 3 10 #"operation?"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 10 #"        (("
-0 0 14 3 5 #"call?"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 10 #"        (("
-0 0 14 3 6 #"block?"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 66
-#";; A sequence of ArithmeticExpressions (ArithmeticExpressionsList)"
-0 0 24 29 1 #"\n"
-0 0 17 3 65
-#";;           is represented as a list of a ArithmeticExpressions."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 25 #";; CONSTRUCTOR TEMPLATES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 56 #";; empty                           -- the empty sequence"
-0 0 24 29 1 #"\n"
-0 0 17 3 16 #";; (cons a aseq)"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";;   WHERE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 71
-(
- #";;    a    : ArithmeticExpression     is the first ArithmeticExpress"
- #"ion"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 56 #";;                                      in the sequence."
-0 0 24 29 1 #"\n"
-0 0 17 3 70
-(
- #";;    aseq : ArithmeticExpressionList is the the rest of the sequenc"
- #"e."
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; OBSERVER TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 42 #";; ael-fn : ArithmeticExpressionList -> ??"
-0 0 24 29 1 #"\n"
-0 0 17 3 2 #"#;"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 6 #"ael-fn"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"a"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"empty?"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"a"
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 1 #"]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"..."
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"first"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"a"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"               ("
-0 0 14 3 6 #"ael-fn"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"rest"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"a"
-0 0 24 3 6 #")))]))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 37 #";; A sequence of Strings (StringList)"
-0 0 24 29 1 #"\n"
-0 0 17 3 51 #";;           is represented as a list of a Strings."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 25 #";; CONSTRUCTOR TEMPLATES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 42 #";; empty             -- the empty sequence"
-0 0 24 29 1 #"\n"
-0 0 17 3 15 #";; (cons s seq)"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";;   WHERE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 60
-#";;    s    : String     is the first String in the sequence."
-0 0 24 29 1 #"\n"
-0 0 17 3 56 #";;    seq  : StringList is the the rest of the sequence."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; OBSERVER TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 28 #";; stl-fn : StringList -> ??"
-0 0 24 29 1 #"\n"
-0 0 17 3 2 #"#;"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 6 #"stl-fn"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"a"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"empty?"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"a"
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 1 #"]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"..."
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"first"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"a"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"               ("
-0 0 14 3 6 #"stl-fn"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"rest"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"a"
-0 0 24 3 6 #")))]))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 67
-#";; An OperationName is represented as one of the following strings:"
-0 0 24 29 1 #"\n"
-0 0 17 3 40 #";;     -- \"+\"      (indicating addition)"
-0 0 24 29 1 #"\n"
-0 0 17 3 43 #";;     -- \"-\"      (indicating subtraction)"
-0 0 24 29 1 #"\n"
-0 0 17 3 46 #";;     -- \"*\"      (indicating multiplication)"
-0 0 24 29 1 #"\n"
-0 0 17 3 40 #";;     -- \"/\"      (indicating division)"
-0 0 24 29 1 #"\n"
-0 0 17 3 2 #";;"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; OBSERVER TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 42 #";; operation-name-fn : OperationName -> ??"
-0 0 24 29 1 #"\n"
-0 0 17 3 2 #"#;"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 17 #"operation-name-fn"
-0 0 24 3 1 #" "
-0 0 14 3 2 #"op"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 3 3 #" (("
-0 0 14 3 8 #"string=?"
-0 0 24 3 1 #" "
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"+\""
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 10 #"        (("
-0 0 14 3 8 #"string=?"
-0 0 24 3 1 #" "
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"-\""
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 10 #"        (("
-0 0 14 3 8 #"string=?"
-0 0 24 3 1 #" "
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 10 #"        (("
-0 0 14 3 8 #"string=?"
-0 0 24 3 1 #" "
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"/\""
-0 0 24 3 2 #") "
-0 0 14 3 3 #"..."
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 42 #";; An Operation is represented as a struct"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";; (make-operation name)"
-0 0 24 29 1 #"\n"
-0 0 17 3 30 #";;  with the following fields:"
-0 0 24 29 1 #"\n"
-0 0 17 3 10 #";; INTERP:"
-0 0 24 29 1 #"\n"
-0 0 17 3 56 #";;    name : OperationName is the name of the operation."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 18 #";; IMPLEMENTATION:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 13 #"define-struct"
-0 0 24 3 1 #" "
-0 0 14 3 9 #"operation"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"name"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";; CONSTRUCTOR TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; (make-operation OperationName)"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; OBSERVER TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 31 #";; operation-fn: Operation -> ?"
-0 0 24 29 1 #"\n"
-0 0 17 3 28 #";; (define (operation-fn op)"
-0 0 24 29 1 #"\n"
-0 0 17 3 31 #";;    (... (operation-name op))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 40 #";; A Variable is represented as a struct"
-0 0 24 29 1 #"\n"
-0 0 17 3 23 #";; (make-variable name)"
-0 0 24 29 1 #"\n"
-0 0 17 3 30 #";;  with the following fields:"
-0 0 24 29 1 #"\n"
-0 0 17 3 10 #";; INTERP:"
-0 0 24 29 1 #"\n"
-0 0 17 3 65
-#";;    name : String (the string begins with a letter and contains"
-0 0 24 29 1 #"\n"
-0 0 17 3 54 #";;                     nothing but letters and digits)"
-0 0 24 29 1 #"\n"
-0 0 17 3 45 #";;               is the name of the variable."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 18 #";; IMPLEMENTATION:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 13 #"define-struct"
-0 0 24 3 1 #" "
-0 0 14 3 8 #"variable"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"name"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";; CONSTRUCTOR TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 25 #";; (make-variable String)"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; OBSERVER TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 29 #";; variable-fn: Variable -> ?"
-0 0 24 29 1 #"\n"
-0 0 17 3 26 #";; (define (variable-fn v)"
-0 0 24 29 1 #"\n"
-0 0 17 3 29 #";;    (... (variable-name v))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 39 #";; A Literal is represented as a struct"
-0 0 24 29 1 #"\n"
-0 0 17 3 23 #";; (make-literal value)"
-0 0 24 29 1 #"\n"
-0 0 17 3 30 #";;  with the following fields:"
-0 0 24 29 1 #"\n"
-0 0 17 3 10 #";; INTERP:"
-0 0 24 29 1 #"\n"
-0 0 17 3 47 #";;    value : Real is the value of the literal."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 18 #";; IMPLEMENTATION:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 13 #"define-struct"
-0 0 24 3 1 #" "
-0 0 14 3 7 #"literal"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"value"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";; CONSTRUCTOR TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 22 #";; (make-literal Real)"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; OBSERVER TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 27 #";; literal-fn: Literal -> ?"
-0 0 24 29 1 #"\n"
-0 0 17 3 25 #";; (define (literal-fn l)"
-0 0 24 29 1 #"\n"
-0 0 17 3 29 #";;    (... (literal-value l))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; A Call is represented as a struct"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; (make-call-exp operator operands)"
-0 0 24 29 1 #"\n"
-0 0 17 3 30 #";;  with the following fields:"
-0 0 24 29 1 #"\n"
-0 0 17 3 10 #";; INTERP:"
-0 0 24 29 1 #"\n"
-0 0 17 3 57 #";;    operator : ArithmeticExpression     is the operator"
-0 0 24 29 1 #"\n"
-0 0 17 3 68
-#";;                                          expression of that call."
-0 0 24 29 1 #"\n"
-0 0 17 3 56 #";;    operands : ArithmeticExpressionList is the operand"
-0 0 24 29 1 #"\n"
-0 0 17 3 68
-#";;                                          expression of that call."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 18 #";; IMPLEMENTATION:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 13 #"define-struct"
-0 0 24 3 1 #" "
-0 0 14 3 8 #"call-exp"
-0 0 24 3 2 #" ("
-0 0 14 3 8 #"operator"
-0 0 24 3 1 #" "
-0 0 14 3 8 #"operands"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";; CONSTRUCTOR TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 64
-#";; (make-call-exp ArithmeticExpression ArithmeticExpressionList)"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; OBSERVER TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; call-fn: Call -> ?"
-0 0 24 29 1 #"\n"
-0 0 17 3 26 #";; (define (call-exp-fn c)"
-0 0 24 29 1 #"\n"
-0 0 17 3 32 #";;    (... (call-exp-operator c)"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;         (call-exp-operands c))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 37 #";; A Block is represented as a struct"
-0 0 24 29 1 #"\n"
-0 0 17 3 32 #";; (make-block-exp var rhs body)"
-0 0 24 29 1 #"\n"
-0 0 17 3 30 #";;  with the following fields:"
-0 0 24 29 1 #"\n"
-0 0 17 3 10 #";; INTERP:"
-0 0 24 29 1 #"\n"
-0 0 17 3 71
-(
- #";;   var  : Variable             is the variable defined by that blo"
- #"ck."
-) 0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";;   rhs  : ArithmeticExpression is the expression whose value "
-0 0 24 29 1 #"\n"
-0 0 17 3 73
-(
- #";;                                  will become the value of the var"
- #"iable"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 58
-#";;                                  defined by that block."
-0 0 24 29 1 #"\n"
-0 0 17 3 74
-(
- #";;   body : ArithmeticExpression is the expression whose value will "
- #"become"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 70
-(
- #";;                                  the value of the block expressio"
- #"n."
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 18 #";; IMPLEMENTATION:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 13 #"define-struct"
-0 0 24 3 1 #" "
-0 0 14 3 9 #"block-exp"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"rhs"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"body"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";; CONSTRUCTOR TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 70
-(
- #";; (make-block-exp Variable ArithmeticExpression ArithmeticExpressio"
- #"n)"
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; OBSERVER TEMPLATE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 23 #";; block-fn: Block -> ?"
-0 0 24 29 1 #"\n"
-0 0 17 3 27 #";; (define (block-exp-fn b)"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;    (... (block-exp-operator b)"
-0 0 24 29 1 #"\n"
-0 0 17 3 34 #";;         (block-exp-operands b))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 26 #";;;;;;;;;;;;;;;;;;;;;;;;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 13 #";; FUNCTIONS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 26 #";;;;;;;;;;;;;;;;;;;;;;;;;;"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";; lit : Real -> Literal"
-0 0 24 29 1 #"\n"
-0 0 17 3 25 #";; GIVEN:   a real number"
-0 0 24 29 1 #"\n"
-0 0 17 3 50 #";; RETURNS: a literal that represents that number."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; (lit 3)    => (make-literal 3)"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; (lit -2.5) => (make-literal -2.5)"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"5"
-0 0 24 3 3 #") ("
-0 0 14 3 12 #"make-literal"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"5"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 19 3 47 #"\"(lit 5) should return: a Literal with value 5\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 50 #";; STRATEGY: Use Constructor Template for Literal."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"num"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"make-literal"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"num"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 27 #";; var : String -> Variable"
-0 0 24 29 1 #"\n"
-0 0 17 3 20 #";; GIVEN:   a string"
-0 0 24 29 1 #"\n"
-0 0 17 3 56 #";; WHERE:   the string begins with a letter and contains"
-0 0 24 29 1 #"\n"
-0 0 17 3 43 #";;           nothing but letters and digits"
-0 0 24 29 1 #"\n"
-0 0 17 3 53 #";; RETURNS: a variable whose name is the given string"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 40 #";; (var \"x15\") => (make-variable `\"x15\")"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"y2\""
-0 0 24 3 3 #") ("
-0 0 14 3 13 #"make-variable"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"y2\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 19 3 49 #"\"(var y2) should return: A Variable with name y2\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 51 #";; STRATEGY: Use Constructor Template for Variable."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"name"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 13 #"make-variable"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"name"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 34 #";; op : OperationName -> Operation"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; GIVEN:   the name of an operation"
-0 0 24 29 1 #"\n"
-0 0 17 3 41 #";; RETURNS: the operation with that name."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 35 #";; (op \"-\") => (make-operation \"-\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 35 #";; (op \"*\") => (make-operation \"*\")"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"+\""
-0 0 24 3 3 #") ("
-0 0 14 3 14 #"make-operation"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"+\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 19 3 48 #"\"(op +) should return: an Operation with name +\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 50 #";; STRATEGY: Use Constructor Template for Literal."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"name"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 14 #"make-operation"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"name"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";; call : ArithmeticExpression ArithmeticExpressionList -> Call"
-0 0 24 29 1 #"\n"
-0 0 17 3 68
-#";; GIVEN:   an operator expression and a list of operand expressions"
-0 0 24 29 1 #"\n"
-0 0 17 3 64
-#";; RETURNS: a call expression whose operator and operands are as"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";;             given."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 42 #";;(call (op \"-\") (list (lit 7) (lit 2.5)))"
-0 0 24 29 1 #"\n"
-0 0 17 3 51 #";;                       => (make-call-exp (op \"-\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 68
-#";;                                         (list (lit 7) (lit 2.5)))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"-\""
-0 0 24 3 3 #") ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"7"
-0 0 24 3 3 #") ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 3 #"2.5"
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 3 17 #"                ("
-0 0 14 3 13 #"make-call-exp"
-0 0 24 3 2 #" ("
-0 0 14 3 14 #"make-operation"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"-\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 32 #"                               ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 12 #"make-literal"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"7"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 38 #"                                     ("
-0 0 14 3 12 #"make-literal"
-0 0 24 3 1 #" "
-0 8          10 21 4 #"5/2\0"
-1 #"\0"
-8 #"decimal\0"
-2 #"1\0"
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 19 3 1 #"\""
-0 0 19 3 1 #"("
-0 0 19 3 4 #"call"
-0 0 19 3 2 #" ("
-0 0 19 3 2 #"op"
-0 0 19 3 2 #" -"
-0 0 19 3 3 #") ("
-0 0 19 3 4 #"list"
-0 0 19 3 2 #" ("
-0 0 19 3 3 #"lit"
-0 0 19 3 1 #" "
-0 0 19 3 1 #"7"
-0 0 19 3 3 #") ("
-0 0 19 3 3 #"lit"
-0 0 19 3 1 #" "
-0 0 19 3 3 #"2.5"
-0 0 19 3 3 #")))"
-0 0 19 29 1 #"\n"
-0 0 19 3 11 #"           "
-0 0 19 3 6 #"should"
-0 0 19 3 1 #" "
-0 0 19 3 7 #"return:"
-0 0 19 3 1 #" "
-0 0 19 3 1 #"A"
-0 0 19 3 1 #" "
-0 0 19 3 4 #"Call"
-0 0 19 3 1 #" "
-0 0 19 3 4 #"with"
-0 0 19 3 1 #" "
-0 0 19 3 8 #"operator"
-0 0 19 3 1 #" "
-0 0 19 3 2 #"as"
-0 0 19 3 1 #" "
-0 0 19 3 1 #"-"
-0 0 19 29 1 #"\n"
-0 0 19 3 58
-#"                    and operands as a list with 7 and 2.5\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 47 #";; STRATEGY: Use Constructor Template for Call."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"call"
-0 0 24 3 1 #" "
-0 0 14 3 8 #"operator"
-0 0 24 3 1 #" "
-0 0 14 3 7 #"operand"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 13 #"make-call-exp"
-0 0 24 3 1 #" "
-0 0 14 3 8 #"operator"
-0 0 24 3 1 #" "
-0 0 14 3 7 #"operand"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 47 #";; call-operator : Call -> ArithmeticExpression"
-0 0 24 29 1 #"\n"
-0 0 17 3 18 #";; GIVEN:   a call"
-0 0 24 29 1 #"\n"
-0 0 17 3 48 #";; RETURNS: the operator expression of that call"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 32 #";; (call-operator (call (op \"-\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 50 #";;                      (list (lit 7) (lit 2.5))))"
-0 0 24 29 1 #"\n"
-0 0 17 3 22 #";;         => (op \"-\")"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operator"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"+\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 38 #"                                     ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 2 #"10"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 44 #"                                           ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 3 #"5.2"
-0 0 24 3 4 #"))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 17 #"                ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"+\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 19 3 1 #"\""
-0 0 19 3 1 #"("
-0 0 19 3 13 #"call-operator"
-0 0 19 3 2 #" ("
-0 0 19 3 4 #"call"
-0 0 19 3 2 #" ("
-0 0 19 3 2 #"op"
-0 0 19 3 1 #" "
-0 0 19 3 1 #"+"
-0 0 19 3 2 #")("
-0 0 19 3 4 #"list"
-0 0 19 3 2 #" ("
-0 0 19 3 3 #"lit"
-0 0 19 3 1 #" "
-0 0 19 3 2 #"10"
-0 0 19 3 3 #") ("
-0 0 19 3 3 #"lit"
-0 0 19 3 1 #" "
-0 0 19 3 3 #"5.2"
-0 0 19 3 4 #"))))"
-0 0 19 29 1 #"\n"
-0 0 19 3 41 #"          should return: the Operation +\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 43 #";; STRATEGY: Use Observer Template for Call"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;                        on exp."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operator"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 17 #"call-exp-operator"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 51 #";; call-operands : Call -> ArithmeticExpressionList"
-0 0 24 29 1 #"\n"
-0 0 17 3 18 #";; GIVEN:   a call"
-0 0 24 29 1 #"\n"
-0 0 17 3 48 #";; RETURNS: the operand expressions of that call"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 32 #";; (call-operands (call (op \"-\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 50 #";;                      (list (lit 7) (lit 2.5))))"
-0 0 24 29 1 #"\n"
-0 0 17 3 38 #";;         => (list (lit 7) (lit 2.5))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operands"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"+\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 38 #"                                     ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 2 #"10"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 44 #"                                           ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 3 #"5.2"
-0 0 24 3 4 #"))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 17 #"                ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 2 #"10"
-0 0 24 3 3 #") ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 3 #"5.2"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 19 3 1 #"\""
-0 0 19 3 1 #"("
-0 0 19 3 15 #"call-operands ("
-0 0 19 3 4 #"call"
-0 0 19 3 2 #" ("
-0 0 19 3 2 #"op"
-0 0 19 3 4 #" +)("
-0 0 19 3 4 #"list"
-0 0 19 3 2 #" ("
-0 0 19 3 3 #"lit"
-0 0 19 3 1 #" "
-0 0 19 3 8 #"10) (lit"
-0 0 19 3 8 #" 5.2))))"
-0 0 19 29 1 #"\n"
-0 0 19 3 57
-#"          should return: the list of operands 10 and 5.2\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 43 #";; STRATEGY: Use Observer Template for Call"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;                        on exp."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operands"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 17 #"call-exp-operands"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 42 #";; call? : ArithmeticExpression -> Boolean"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; GIVEN:   an arithmetic expression"
-0 0 24 29 1 #"\n"
-0 0 17 3 54 #";; RETURNS: true if and only the expression is a call."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 61
-#";; (call? (op \"-\"))                                 => #false"
-0 0 24 29 1 #"\n"
-0 0 17 3 60
-#";; (call? (call (op \"-\") (list (lit 7) (lit 2.5)))) => #true"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"call?"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"/\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"                "
-0 0 21 3 6 #"#false"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 19 3 37 #"\"(call? (op /)) should return: false\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"call?"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"/\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 30 #"                             ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"x1\""
-0 0 24 3 4 #"))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"                "
-0 0 21 3 5 #"#true"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 19 3 1 #"\""
-0 0 19 3 6 #"(call?"
-0 0 19 3 2 #" ("
-0 0 19 3 4 #"call"
-0 0 19 3 2 #" ("
-0 0 19 3 2 #"op"
-0 0 19 3 4 #" /)("
-0 0 19 3 4 #"list"
-0 0 19 3 2 #" ("
-0 0 19 3 3 #"lit"
-0 0 19 3 1 #" "
-0 0 19 3 2 #"10"
-0 0 19 3 3 #") ("
-0 0 19 3 3 #"lit"
-0 0 19 3 1 #" "
-0 0 19 3 1 #"2"
-0 0 19 3 4 #"))))"
-0 0 19 29 1 #"\n"
-0 0 19 3 30 #"          should return: true\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; STRATEGY: Use Predicates for Call"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;                        on exp."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"call?"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 9 #"call-exp?"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 61
-#";; block : Variable ArithmeticExpression ArithmeticExpression"
-0 0 24 29 1 #"\n"
-0 0 17 3 38 #";;             -> ArithmeticExpression"
-0 0 24 29 1 #"\n"
-0 0 17 3 62
-#";; GIVEN:   a variable, an expression e0, and an expression e1"
-0 0 24 29 1 #"\n"
-0 0 17 3 60
-#";; RETURNS: a block that defines the variable's value as the"
-0 0 24 29 1 #"\n"
-0 0 17 3 67
-#";;          value of e0; the block's value will be the value of e1."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 20 #";; (block (var \"x5\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 17 #";;        (lit 5)"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;        (call (op \"*\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 47 #";;              (list (var \"x6\") (var \"x7\")))))"
-0 0 24 29 1 #"\n"
-0 0 17 3 49 #";;                  => (make-block-exp (var \"x5\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 46 #";;                                     (lit 5)"
-0 0 24 29 1 #"\n"
-0 0 17 3 53 #";;                                     (call (op \"*\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 61
-#";;                                           (list (var \"x6\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 65
-#";;                                                 (var \"x7\")))))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 2 #")("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"5"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 24 #"                       ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 2 #")("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"10\""
-0 0 24 3 3 #") ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"2\""
-0 0 24 3 4 #"))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 17 #"                ("
-0 0 14 3 14 #"make-block-exp"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"make-variable"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 33 #"                                ("
-0 0 14 3 12 #"make-literal"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"5"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 33 #"                                ("
-0 0 14 3 13 #"make-call-exp"
-0 0 24 3 2 #" ("
-0 0 14 3 14 #"make-operation"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 48 #"                                               ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"make-variable"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"10\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 54 #"                                                     ("
-0 0 14 3 13 #"make-variable"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"2\""
-0 0 24 3 4 #"))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"      "
-0 0 19 3 1 #"\""
-0 0 19 3 1 #"("
-0 0 19 3 5 #"block"
-0 0 19 3 2 #" ("
-0 0 19 3 3 #"var"
-0 0 19 3 2 #" x"
-0 0 19 3 2 #")("
-0 0 19 3 3 #"lit"
-0 0 19 3 8 #" 5)(call"
-0 0 19 3 2 #" ("
-0 0 19 3 4 #"op *"
-0 0 19 3 2 #")("
-0 0 19 3 4 #"list"
-0 0 19 3 2 #" ("
-0 0 19 3 9 #"var 10) ("
-0 0 19 3 9 #"var 2))))"
-0 0 19 29 1 #"\n"
-0 0 19 3 56 #"          should return: A Block with var as x, rhs as 5"
-0 0 19 29 1 #"\n"
-0 0 19 3 67
-#"                     and a body with call with 10 and 2 multiplied\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 48 #";; STRATEGY: Use Constructor Template for Block."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"rhs"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"body"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 14 #"make-block-exp"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"rhs"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"body"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 32 #";; block-var : Block -> Variable"
-0 0 24 29 1 #"\n"
-0 0 17 3 19 #";; GIVEN:   a block"
-0 0 24 29 1 #"\n"
-0 0 17 3 47 #";; RETURNS: the variable defined by that block."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 31 #";; (block-var (block (var \"x5\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 28 #";;                   (lit 5)"
-0 0 24 29 1 #"\n"
-0 0 17 3 35 #";;                   (call (op \"*\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 58
-#";;                         (list (var \"x6\") (var \"x7\")))))"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;         => (var \"x5\")"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 9 #"block-var"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 2 #")("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"5"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 35 #"                                  ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 41 #"                                        ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"10\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 47 #"                                              ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"2\""
-0 0 24 3 5 #")))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 17 #"                ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"      "
-0 0 19 3 1 #"\""
-0 0 19 3 1 #"("
-0 0 19 3 5 #"block"
-0 0 19 3 2 #" ("
-0 0 19 3 3 #"var"
-0 0 19 3 2 #" x"
-0 0 19 3 2 #")("
-0 0 19 3 3 #"lit"
-0 0 19 3 8 #" 5)(call"
-0 0 19 3 2 #" ("
-0 0 19 3 4 #"op *"
-0 0 19 3 2 #")("
-0 0 19 3 4 #"list"
-0 0 19 3 2 #" ("
-0 0 19 3 9 #"var 10) ("
-0 0 19 3 9 #"var 2))))"
-0 0 19 29 1 #"\n"
-0 0 19 3 41 #"          should return: A variable as x\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 44 #";; STRATEGY: Use Observer Template for Block"
-0 0 24 29 1 #"\n"
-0 0 17 3 31 #";;                        on b."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 9 #"block-var"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"b"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 13 #"block-exp-var"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"b"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 44 #";; block-rhs : Block -> ArithmeticExpression"
-0 0 24 29 1 #"\n"
-0 0 17 3 19 #";; GIVEN:   a block"
-0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";; RETURNS: the expression whose value will become the value of"
-0 0 24 29 1 #"\n"
-0 0 17 3 47 #";;          the variable defined by that block."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 31 #";; (block-rhs (block (var \"x5\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 28 #";;                   (lit 5)"
-0 0 24 29 1 #"\n"
-0 0 17 3 35 #";;                   (call (op \"*\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 58
-#";;                         (list (var \"x6\") (var \"x7\")))))"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";;         => (lit 5)"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 9 #"block-rhs"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 2 #")("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"5"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 35 #"                                  ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 41 #"                                        ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"10\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 47 #"                                              ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"2\""
-0 0 24 3 5 #")))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 17 #"                ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"5"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"      "
-0 0 19 3 1 #"\""
-0 0 19 3 1 #"("
-0 0 19 3 5 #"block"
-0 0 19 3 2 #" ("
-0 0 19 3 3 #"var"
-0 0 19 3 2 #" x"
-0 0 19 3 2 #")("
-0 0 19 3 3 #"lit"
-0 0 19 3 8 #" 5)(call"
-0 0 19 3 2 #" ("
-0 0 19 3 4 #"op *"
-0 0 19 3 2 #")("
-0 0 19 3 4 #"list"
-0 0 19 3 2 #" ("
-0 0 19 3 9 #"var 10) ("
-0 0 19 3 9 #"var 2))))"
-0 0 19 29 1 #"\n"
-0 0 19 3 34 #"          should return: RHS as 5\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 44 #";; STRATEGY: Use Observer Template for Block"
-0 0 24 29 1 #"\n"
-0 0 17 3 31 #";;                        on b."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 9 #"block-rhs"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"b"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 13 #"block-exp-rhs"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"b"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 45 #";; block-body : Block -> ArithmeticExpression"
-0 0 24 29 1 #"\n"
-0 0 17 3 19 #";; GIVEN:   a block"
-0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";; RETURNS: the expression whose value will become the value of"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;          the block expression."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 31 #";; (block-rhs (block (var \"x5\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 28 #";;                   (lit 5)"
-0 0 24 29 1 #"\n"
-0 0 17 3 35 #";;                   (call (op \"*\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 58
-#";;                         (list (var \"x6\") (var \"x7\")))))"
-0 0 24 29 1 #"\n"
-0 0 17 3 58
-#";;         => (call (op \"*\") (list (var \"x6\") (var \"x7\")))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 10 #"block-body"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 2 #")("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"5"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 36 #"                                   ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 42 #"                                         ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"10\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 48 #"                                               ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"2\""
-0 0 24 3 5 #")))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 17 #"                ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 2 #")("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"10\""
-0 0 24 3 2 #")("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"2\""
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"      "
-0 0 19 3 1 #"\""
-0 0 19 3 1 #"("
-0 0 19 3 5 #"block"
-0 0 19 3 2 #" ("
-0 0 19 3 3 #"var"
-0 0 19 3 2 #" x"
-0 0 19 3 2 #")("
-0 0 19 3 3 #"lit"
-0 0 19 3 8 #" 5)(call"
-0 0 19 3 2 #" ("
-0 0 19 3 4 #"op *"
-0 0 19 3 2 #")("
-0 0 19 3 4 #"list"
-0 0 19 3 2 #" ("
-0 0 19 3 9 #"var 10) ("
-0 0 19 3 9 #"var 2))))"
-0 0 19 29 1 #"\n"
-0 0 19 3 65
-#"          should return: A body as call with 10 and 2 multiplied\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 44 #";; STRATEGY: Use Observer Template for Block"
-0 0 24 29 1 #"\n"
-0 0 17 3 31 #";;                        on b."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 10 #"block-body"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"b"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 14 #"block-exp-body"
-0 0 24 3 1 #" "
-0 0 14 3 1 #"b"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 43 #";; block? : ArithmeticExpression -> Boolean"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; GIVEN:   an arithmetic expression"
-0 0 24 29 1 #"\n"
-0 0 17 3 55 #";; RETURNS: true if and only the expression is a block."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 11 #";; EXAMPLE:"
-0 0 24 29 1 #"\n"
-0 0 17 3 46 #";; (block? (op \"-\"))                 => #false"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; (call? (block (var \"x\")(lit 5)"
-0 0 24 29 1 #"\n"
-0 0 17 3 31 #";;               (call (op \"*\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;               (list (var \"10\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 45 #";;                     (var \"2\"))))) => #true"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 6 #"block?"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"/\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"                "
-0 0 21 3 6 #"#false"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"    "
-0 0 19 3 38 #"\"(block? (op /)) should return: false\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 6 #"block?"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 2 #")("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"5"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 31 #"                              ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 37 #"                                    ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"10\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 43 #"                                          ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"2\""
-0 0 24 3 5 #")))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"                "
-0 0 21 3 5 #"#true"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"   "
-0 0 19 3 1 #"\""
-0 0 19 3 6 #"(call?"
-0 0 19 3 1 #" "
-0 0 19 3 1 #"("
-0 0 19 3 5 #"call?"
-0 0 19 3 2 #" ("
-0 0 19 3 5 #"block"
-0 0 19 3 2 #" ("
-0 0 19 3 3 #"var"
-0 0 19 3 19 #" x)(lit 5)(call (op"
-0 0 19 3 8 #" *)(list"
-0 0 19 3 21 #" (var 10)(var 2))))))"
-0 0 19 29 1 #"\n"
-0 0 19 3 30 #"          should return: true\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 37 #";; STRATEGY: Use Predicates for Block"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;                        on exp."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 6 #"block?"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 10 #"block-exp?"
-0 0 24 3 1 #" "
-0 0 14 3 3 #"exp"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 58
-#";; operation-expression? : ArithmeticExpression -> Boolean"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; GIVEN:   an arithmetic expression"
-0 0 24 29 1 #"\n"
-0 0 17 3 71
-(
- #";; RETURNS: true if and only the expression is an operation expressi"
- #"on."
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 70
-(
- #";; (operation-expression? (block (var \"z\")(var \"x\")(op \"+\"))) "
- #"=> #true"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 70
-(
- #";; (operation-expression? (op \"+\"))                           => #"
- #"true"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 51 #";; (operation-expression? (block (var \"z\")(var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 47 #";;                               (call (op \"+\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 54 #";;                                     (list (lit 7.2)"
-0 0 24 29 1 #"\n"
-0 0 17 3 71
-(
- #";;                                           (var \"x\")))))    => #"
- #"false"
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 21 #"operation-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"                "
-0 0 21 3 5 #"#true"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"    "
-0 0 19 3 52 #"\"(operation-expression? (op *)) should return: true\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 21 #"operation-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"z\""
-0 0 24 3 2 #")("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 47 #"                                              ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"y\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 54 #"                                                     ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 3 #"7.2"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 54 #"                                                     ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 21 3 2 #"10"
-0 0 24 3 4 #"))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"                "
-0 0 21 3 6 #"#false"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"    "
-0 0 19 3 1 #"\""
-0 0 19 3 1 #"("
-0 0 19 3 21 #"operation-expression?"
-0 0 19 3 33 #" A Block having a body as A Block"
-0 0 19 29 1 #"\n"
-0 0 19 3 61
-#"             having a body as literal 10 should return: true\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 59
-#";; STRATEGY: Use Observer Template for ArithmeticExpression"
-0 0 24 29 1 #"\n"
-0 0 17 3 45 #";;                                   on aexp."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 21 #"operation-expression?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 10 #"operation?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 21 3 5 #"#true"
-0 0 24 3 1 #"]"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"block?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 21 #"operation-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 10 #"block-body"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 3 #"))]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 3 1 #" "
-0 0 21 3 6 #"#false"
-0 0 24 3 3 #"]))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 70
-(
- #";; operands-constant-expression? : ArithmeticExpressionList -> Boole"
- #"an"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 48 #";; GIVEN:   a sequence of arithmetic expressions"
-0 0 24 29 1 #"\n"
-0 0 17 3 71
-(
- #";; RETURNS: true if and only all the operands are constant expressio"
- #"ns."
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 72
-(
- #";; (operands-constant-expression? (list (lit \"5\") (lit \"10\"))   "
- #"=> #true"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 49 #";; (operands-constant-expression? (list (lit \"5\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 56
-#";;                                      (block (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 56
-#";;                                             (lit \"2\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 72
-(
- #";;                                             (lit \"7\"))       =>"
- #" #true"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 49 #";; (operands-constant-expression? (list (lit \"5\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 54 #";;                                      (call (op \"/\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 62
-#";;                                            (list (var \"y2\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 73
-(
- #";;                                                  (lit \"7\"))) =>"
- #" #false"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 50 #";; (operands-constant-expression? (list (lit \"10\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 73
-(
- #";;                                      (var \"x\")))             =>"
- #" #false"
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";; STRATEGY: Use Observer Template for ArithmeticExpressionList"
-0 0 24 29 1 #"\n"
-0 0 17 3 46 #";;                                   on alist."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 29 #"operands-constant-expression?"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"empty?"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 21 3 5 #"#true"
-0 0 24 3 1 #"]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 3 #"and"
-0 0 24 3 2 #" ("
-0 0 14 3 20 #"constant-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"first"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 11 #"          ("
-0 0 14 3 29 #"operands-constant-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"rest"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 6 #")))]))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 57 #";; constant-expression? : ArithmeticExpression -> Boolean"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; GIVEN:   an arithmetic expression"
-0 0 24 29 1 #"\n"
-0 0 17 3 69
-(
- #";; RETURNS: true if and only the expression is a constant expression"
- #"."
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 44 #";; (constant-expression? (lit \"5\")) => #true"
-0 0 24 29 1 #"\n"
-0 0 17 3 69
-(
- #";; (constant-expression? (op \"+\"))                           => #t"
- #"rue"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 50 #";; (constant-expression? (block (var \"z\")(var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 47 #";;                               (call (op \"+\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 54 #";;                                     (list (lit 7.2)"
-0 0 24 29 1 #"\n"
-0 0 17 3 71
-(
- #";;                                           (var \"x\")))))    => #"
- #"false"
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 20 #"constant-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"5\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"                "
-0 0 21 3 5 #"#true"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"    "
-0 0 19 3 52 #"\"(constant-expression? (lit 5)) should return: true\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 20 #"constant-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 46 #"                                             ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"5\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 46 #"                                             ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"                "
-0 0 21 3 6 #"#false"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"    "
-0 0 19 3 51 #"\"(constant-expression? Block with body as Variable)"
-0 0 19 29 1 #"\n"
-0 0 19 3 35 #"              should return: false\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 3 2 #" ("
-0 0 14 3 20 #"constant-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 45 #"                                            ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 58
-#"                                                         ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"5\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 58
-#"                                                         ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"6\""
-0 0 24 3 5 #")))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 16 #"                "
-0 0 21 3 5 #"#true"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"    "
-0 0 19 3 63
-#"\"(constant-expression? Call with operator * and list of operand"
-0 0 19 29 1 #"\n"
-0 0 19 3 50 #"            having a Block with body as Literal 6)"
-0 0 19 29 1 #"\n"
-0 0 19 3 34 #"              should return: true\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 59
-#";; STRATEGY: Use Observer Template for ArithmeticExpression"
-0 0 24 29 1 #"\n"
-0 0 17 3 45 #";;                                   on aexp."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 20 #"constant-expression?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 8 #"literal?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 21 3 5 #"#true"
-0 0 24 3 1 #"]"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 5 #"call?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 3 #"and"
-0 0 24 3 2 #" ("
-0 0 14 3 21 #"operation-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operator"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 11 #"          ("
-0 0 14 3 29 #"operands-constant-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operands"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 4 #")))]"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"block?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 20 #"constant-expression?"
-0 0 24 3 2 #" ("
-0 0 14 3 10 #"block-body"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 3 #"))]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 3 1 #" "
-0 0 21 3 6 #"#false"
-0 0 24 3 3 #"]))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 73
-(
- #";; variables-defined-by-operands : ArithmeticExpressionList -> Strin"
- #"gList"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 48 #";; GIVEN:   a sequence of arithmetic expressions"
-0 0 24 29 1 #"\n"
-0 0 17 3 59
-#";; RETURNS: a list of the names of all variables defined by"
-0 0 24 29 1 #"\n"
-0 0 17 3 71
-(
- #";;            all blocks that occur within the expression list, with"
- #"out"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 40 #";;            repetitions, in any order."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";; STRATEGY: Use Observer Template for ArithmeticExpressionList"
-0 0 24 29 1 #"\n"
-0 0 17 3 46 #";;                                   on alist."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 29 #"variables-defined-by-operands"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"empty?"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 2 #") "
-0 0 14 3 5 #"empty"
-0 0 24 3 1 #"]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 6 #"append"
-0 0 24 3 2 #" ("
-0 0 14 3 20 #"variables-defined-by"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"first"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 14 #"             ("
-0 0 14 3 29 #"variables-defined-by-operands"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"rest"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 6 #")))]))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 65
-#";; variables-list-defined-by : ArithmeticExpression -> StringList"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; GIVEN:   an arithmetic expression"
-0 0 24 29 1 #"\n"
-0 0 17 3 59
-#";; RETURNS: a list of the names of all variables defined by"
-0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";;            all blocks that occur within the expression, with"
-0 0 24 29 1 #"\n"
-0 0 17 3 40 #";;            repetitions, in any order."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 29 #";; (variables-list-defined-by"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;               (block (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";;                      (var \"y\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 46 #";;                      (call (block (var \"z\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 46 #";;                                   (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 46 #";;                                   (op \"+\"))"
-0 0 24 29 1 #"\n"
-0 0 17 3 52 #";;                            (list (block (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 50 #";;                                         (lit 5)"
-0 0 24 29 1 #"\n"
-0 0 17 3 53 #";;                                         (var \"x\"))"
-0 0 24 29 1 #"\n"
-0 0 17 3 49 #";;                                  (var \"x\")))))"
-0 0 24 29 1 #"\n"
-0 0 17 3 41 #";;                  => (list \"x\" \"z\" \"x\")"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 59
-#";; STRATEGY: Use Observer Template for ArithmeticExpression"
-0 0 24 29 1 #"\n"
-0 0 17 3 42 #";;                                on aexp."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 25 #"variables-list-defined-by"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 5 #"call?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 6 #"append"
-0 0 24 3 2 #" ("
-0 0 14 3 25 #"variables-list-defined-by"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operator"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 14 #"             ("
-0 0 14 3 29 #"variables-defined-by-operands"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operands"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 4 #")))]"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"block?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 6 #"append"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"variable-name"
-0 0 24 3 2 #" ("
-0 0 14 3 9 #"block-var"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 3 14 #"             ("
-0 0 14 3 25 #"variables-list-defined-by"
-0 0 24 3 2 #" ("
-0 0 14 3 9 #"block-rhs"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 14 #"             ("
-0 0 14 3 25 #"variables-list-defined-by"
-0 0 24 3 2 #" ("
-0 0 14 3 10 #"block-body"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 4 #")))]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"empty"
-0 0 24 3 3 #"]))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 47 #";; remove-duplicates : StringList -> StringList"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";; GIVEN:   a StringList"
-0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";; RETURNS: the same StringList without any duplicate elements."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 59
-#";; STRATEGY: Use Observer Template for StringList on alist."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 17 #"remove-duplicates"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"empty?"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"     "
-0 0 14 3 5 #"empty"
-0 0 24 3 1 #"]"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 7 #"member?"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"first"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 3 #") ("
-0 0 14 3 4 #"rest"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 17 #"remove-duplicates"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"rest"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 3 #"))]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 5 #"list*"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"first"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 3 #") ("
-0 0 14 3 17 #"remove-duplicates"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"rest"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 6 #")))]))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 60
-#";; variables-defined-by : ArithmeticExpression -> StringList"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; GIVEN:   an arithmetic expression"
-0 0 24 29 1 #"\n"
-0 0 17 3 59
-#";; RETURNS: a list of the names of all variables defined by"
-0 0 24 29 1 #"\n"
-0 0 17 3 66
-#";;            all blocks that occur within the expression, without"
-0 0 24 29 1 #"\n"
-0 0 17 3 40 #";;            repetitions, in any order."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 41 #";; (variables-defined-by (block (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 41 #";;                              (var \"y\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 54 #";;                              (call (block (var \"z\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 54 #";;                                           (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 54 #";;                                           (op \"+\"))"
-0 0 24 29 1 #"\n"
-0 0 17 3 60
-#";;                                    (list (block (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 58
-#";;                                                 (lit 5)"
-0 0 24 29 1 #"\n"
-0 0 17 3 61
-#";;                                                 (var \"x\"))"
-0 0 24 29 1 #"\n"
-0 0 17 3 57
-#";;                                          (var \"x\")))))"
-0 0 24 29 1 #"\n"
-0 0 17 3 72
-(
- #";;                                   => (list \"x\" \"z\") or (list "
- #"\"z\" \"x\")"
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"   ("
-0 0 14 3 20 #"variables-defined-by"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"a\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 39 #"                                      ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"2\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 39 #"                                      ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"a\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 46 #"                                             ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"3\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 46 #"                                             ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"a\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 53 #"                                                    ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"4\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 53 #"                                                    ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 4 #"))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 39 #"                                      ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 45 #"                                            ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"z\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 58
-#"                                                         ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 58
-#"                                                         ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"+\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 51 #"                                                  ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"1\""
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 3 45 #"                                            ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 52 #"                                                   ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"y\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 52 #"                                                   ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"5\""
-0 0 24 3 5 #")))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"   ("
-0 0 14 3 4 #"list"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"a\""
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"z\""
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"   "
-0 0 19 3 1 #"\""
-0 0 19 3 56 #"(variables-defined-by ArithmeticExpression with 5 Blocks"
-0 0 19 29 1 #"\n"
-0 0 19 3 56 #"       where 3 Variables defined are a and 2 are x and z"
-0 0 19 29 1 #"\n"
-0 0 19 3 42 #"              should return: (list a z x)\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 35 #";; STRATEGY: Use Simpler Functions."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 20 #"variables-defined-by"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 17 #"remove-duplicates"
-0 0 24 3 2 #" ("
-0 0 14 3 25 #"variables-list-defined-by"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 70
-(
- #";; variables-used-by-operands : ArithmeticExpressionList -> StringLi"
- #"st"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 48 #";; GIVEN:   a sequence of arithmetic expressions"
-0 0 24 29 1 #"\n"
-0 0 17 3 56 #";; RETURNS: a list of the names of all variables used by"
-0 0 24 29 1 #"\n"
-0 0 17 3 62
-#";;           expressions that occur within the expression list"
-0 0 24 29 1 #"\n"
-0 0 17 3 76
-(
- #";;           not including the ones defined in a block unless they a"
- #"re used."
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 3 #";; "
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 63
-#";; STRATEGY: Use Observer Template for ArithmeticExpressionList"
-0 0 24 29 1 #"\n"
-0 0 17 3 46 #";;                                   on alist."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 26 #"variables-used-by-operands"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"empty?"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 2 #") "
-0 0 14 3 5 #"empty"
-0 0 24 3 1 #"]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 6 #"append"
-0 0 24 3 2 #" ("
-0 0 14 3 17 #"variables-used-by"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"first"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 14 #"             ("
-0 0 14 3 26 #"variables-used-by-operands"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"rest"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"alist"
-0 0 24 3 6 #")))]))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 33 #";; CONTRACT & PURPOSE STATEMENTS:"
-0 0 24 29 1 #"\n"
-0 0 17 3 57 #";; variables-used-by : ArithmeticExpression -> StringList"
-0 0 24 29 1 #"\n"
-0 0 17 3 36 #";; GIVEN:   an arithmetic expression"
-0 0 24 29 1 #"\n"
-0 0 17 3 56 #";; RETURNS: a list of the names of all variables used in"
-0 0 24 29 1 #"\n"
-0 0 17 3 64
-#";;           the expression, including variables used in a block"
-0 0 24 29 1 #"\n"
-0 0 17 3 69
-(
- #";;           on the right hand side of its definition or in its body"
- #","
-) 0 0 24 29 1 #"\n"
-0 0 17 3 66
-#";;           but not including variables defined by a block unless"
-0 0 24 29 1 #"\n"
-0 0 17 3 32 #";;           they are also used."
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 12 #";; EXAMPLES:"
-0 0 24 29 1 #"\n"
-0 0 17 3 21 #";; (variables-used-by"
-0 0 24 29 1 #"\n"
-0 0 17 3 22 #";;    (block (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 22 #";;           (var \"y\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 35 #";;           (call (block (var \"z\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 35 #";;                        (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 35 #";;                        (op \"+\"))"
-0 0 24 29 1 #"\n"
-0 0 17 3 41 #";;                 (list (block (var \"x\")"
-0 0 24 29 1 #"\n"
-0 0 17 3 39 #";;                              (lit 5)"
-0 0 24 29 1 #"\n"
-0 0 17 3 42 #";;                              (var \"x\"))"
-0 0 24 29 1 #"\n"
-0 0 17 3 38 #";;                       (var \"x\")))))"
-0 0 24 29 1 #"\n"
-0 0 17 3 68
-(
- #";;              => (list \"x\" \"x\" \"x\" \"y\") or (list \"y\" \"x"
- #"\" \"x\" \"x\"))"
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 9 #";; TESTS:"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 14 #"begin-for-test"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 14 3 12 #"check-equal?"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"   ("
-0 0 14 3 17 #"variables-used-by"
-0 0 24 3 2 #" ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"a\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 36 #"                                   ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"2\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 36 #"                                   ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"a\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 43 #"                                          ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"3\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 43 #"                                          ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"a\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 50 #"                                                 ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"4\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 50 #"                                                 ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"*\""
-0 0 24 3 4 #"))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 36 #"                                   ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 42 #"                                         ("
-0 0 14 3 4 #"call"
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"z\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 55 #"                                                      ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 55 #"                                                      ("
-0 0 14 3 2 #"op"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"+\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 48 #"                                               ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"1\""
-0 0 24 3 3 #")))"
-0 0 24 29 1 #"\n"
-0 0 24 3 42 #"                                         ("
-0 0 14 3 5 #"block"
-0 0 24 3 2 #" ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 49 #"                                                ("
-0 0 14 3 3 #"var"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"y\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 49 #"                                                ("
-0 0 14 3 3 #"lit"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"5\""
-0 0 24 3 5 #")))))"
-0 0 24 29 1 #"\n"
-0 0 24 3 4 #"   ("
-0 0 14 3 4 #"list"
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"x\""
-0 0 24 3 1 #" "
-0 0 19 3 3 #"\"y\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"   "
-0 0 19 3 1 #"\""
-0 0 19 3 56 #"(variables-defined-by ArithmeticExpression with 5 Blocks"
-0 0 19 29 1 #"\n"
-0 0 19 3 53 #"       where there are 5 variables defined and 3 used"
-0 0 19 29 1 #"\n"
-0 0 19 3 42 #"              should return: (list x x y)\""
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 59
-#";; STRATEGY: Use Observer Template for ArithmeticExpression"
-0 0 24 29 1 #"\n"
-0 0 17 3 42 #";;                                on aexp."
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 6 #"define"
-0 0 24 3 2 #" ("
-0 0 14 3 17 #"variables-used-by"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 3 #"  ("
-0 0 15 3 4 #"cond"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 9 #"variable?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 4 #"list"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"variable-name"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 3 #"))]"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 5 #"call?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 6 #"append"
-0 0 24 3 2 #" ("
-0 0 14 3 17 #"variables-used-by"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operator"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 14 #"             ("
-0 0 14 3 26 #"variables-used-by-operands"
-0 0 24 3 2 #" ("
-0 0 14 3 13 #"call-operands"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 4 #")))]"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"    [("
-0 0 14 3 6 #"block?"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 6 #"     ("
-0 0 14 3 6 #"append"
-0 0 24 3 2 #" ("
-0 0 14 3 17 #"variables-used-by"
-0 0 24 3 2 #" ("
-0 0 14 3 9 #"block-rhs"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 3 14 #"             ("
-0 0 14 3 17 #"variables-used-by"
-0 0 24 3 2 #" ("
-0 0 14 3 10 #"block-body"
-0 0 24 3 1 #" "
-0 0 14 3 4 #"aexp"
-0 0 24 3 4 #")))]"
-0 0 24 29 1 #"\n"
-0 0 24 3 5 #"    ["
-0 0 14 3 4 #"else"
-0 0 24 3 1 #" "
-0 0 14 3 5 #"empty"
-0 0 24 3 3 #"]))"
-0           0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; DATA DEFINITIONS:
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; An ArithmeticExpression is one of
+;;     -- a Literal
+;;     -- a Variable
+;;     -- an Operation
+;;     -- a Call
+;;     -- a Block
+
+;; OBSERVER TEMPLATE:
+;; arithmetic-expression-fn : ArithmeticExpression -> ??
+#;
+(define (arithmetic-expression-fn exp)
+  (cond ((literal? exp) ...)
+        ((variable? exp) ...)
+        ((operation? exp) ...)
+        ((call? exp) ...)
+        ((block? exp) ...)))
+
+;; A sequence of ArithmeticExpressions (ArithmeticExpressionsList)
+;;           is represented as a list of a ArithmeticExpressions.
+
+;; CONSTRUCTOR TEMPLATES:
+;; empty                           -- the empty sequence
+;; (cons a aseq)
+;;   WHERE:
+;;    a    : ArithmeticExpression     is the first ArithmeticExpression
+;;                                      in the sequence.
+;;    aseq : ArithmeticExpressionList is the the rest of the sequence.
+
+;; OBSERVER TEMPLATE:
+;; ael-fn : ArithmeticExpressionList -> ??
+#;
+(define (ael-fn a)
+  (cond
+    [(empty? a) ...]
+    [else (... (first a)
+               (ael-fn (rest a)))]))
+
+;; A sequence of Strings (StringList)
+;;           is represented as a list of a Strings.
+
+;; CONSTRUCTOR TEMPLATES:
+;; empty             -- the empty sequence
+;; (cons s seq)
+;;   WHERE:
+;;    s    : String     is the first String in the sequence.
+;;    seq  : StringList is the the rest of the sequence.
+
+;; OBSERVER TEMPLATE:
+;; stl-fn : StringList -> ??
+#;
+(define (stl-fn a)
+  (cond
+    [(empty? a) ...]
+    [else (... (first a)
+               (stl-fn (rest a)))]))
+
+;; An OperationName is represented as one of the following strings:
+;;     -- "+"      (indicating addition)
+;;     -- "-"      (indicating subtraction)
+;;     -- "*"      (indicating multiplication)
+;;     -- "/"      (indicating division)
+;;
+
+;; OBSERVER TEMPLATE:
+;; operation-name-fn : OperationName -> ??
+#;
+(define (operation-name-fn op)
+  (cond ((string=? op "+") ...)
+        ((string=? op "-") ...)
+        ((string=? op "*") ...)
+        ((string=? op "/") ...)))
+
+;; An Operation is represented as a struct
+;; (make-operation name)
+;;  with the following fields:
+;; INTERP:
+;;    name : OperationName is the name of the operation.
+
+;; IMPLEMENTATION:
+(define-struct operation (name))
+
+;; CONSTRUCTOR TEMPLATE:
+;; (make-operation OperationName)
+
+;; OBSERVER TEMPLATE:
+;; operation-fn: Operation -> ?
+;; (define (operation-fn op)
+;;    (... (operation-name op))
+
+;; A Variable is represented as a struct
+;; (make-variable name)
+;;  with the following fields:
+;; INTERP:
+;;    name : String (the string begins with a letter and contains
+;;                     nothing but letters and digits)
+;;               is the name of the variable.
+
+;; IMPLEMENTATION:
+(define-struct variable (name))
+
+;; CONSTRUCTOR TEMPLATE:
+;; (make-variable String)
+
+;; OBSERVER TEMPLATE:
+;; variable-fn: Variable -> ?
+;; (define (variable-fn v)
+;;    (... (variable-name v))
+
+;; A Literal is represented as a struct
+;; (make-literal value)
+;;  with the following fields:
+;; INTERP:
+;;    value : Real is the value of the literal.
+
+;; IMPLEMENTATION:
+(define-struct literal (value))
+
+;; CONSTRUCTOR TEMPLATE:
+;; (make-literal Real)
+
+;; OBSERVER TEMPLATE:
+;; literal-fn: Literal -> ?
+;; (define (literal-fn l)
+;;    (... (literal-value l))
+
+;; A Call is represented as a struct
+;; (make-call-exp operator operands)
+;;  with the following fields:
+;; INTERP:
+;;    operator : ArithmeticExpression     is the operator
+;;                                          expression of that call.
+;;    operands : ArithmeticExpressionList is the operand
+;;                                          expression of that call.
+
+;; IMPLEMENTATION:
+(define-struct call-exp (operator operands))
+
+;; CONSTRUCTOR TEMPLATE:
+;; (make-call-exp ArithmeticExpression ArithmeticExpressionList)
+
+;; OBSERVER TEMPLATE:
+;; call-fn: Call -> ?
+;; (define (call-exp-fn c)
+;;    (... (call-exp-operator c)
+;;         (call-exp-operands c))
+
+;; A Block is represented as a struct
+;; (make-block-exp var rhs body)
+;;  with the following fields:
+;; INTERP:
+;;   var  : Variable             is the variable defined by that block.
+;;   rhs  : ArithmeticExpression is the expression whose value 
+;;                                  will become the value of the variable
+;;                                  defined by that block.
+;;   body : ArithmeticExpression is the expression whose value will become
+;;                                  the value of the block expression.
+
+;; IMPLEMENTATION:
+(define-struct block-exp (var rhs body))
+
+;; CONSTRUCTOR TEMPLATE:
+;; (make-block-exp Variable ArithmeticExpression ArithmeticExpression)
+
+;; OBSERVER TEMPLATE:
+;; block-fn: Block -> ?
+;; (define (block-exp-fn b)
+;;    (... (block-exp-operator b)
+;;         (block-exp-operands b))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FUNCTIONS:
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; lit : Real -> Literal
+;; GIVEN:   a real number
+;; RETURNS: a literal that represents that number.
+
+;; EXAMPLE:
+;; (lit 3)    => (make-literal 3)
+;; (lit -2.5) => (make-literal -2.5)
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (lit 5) (make-literal 5)
+     "(lit 5) should return: a Literal with value 5"))
+
+;; STRATEGY: Use Constructor Template for Literal.
+(define (lit num)
+  (make-literal num))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; var : String -> Variable
+;; GIVEN:   a string
+;; WHERE:   the string begins with a letter and contains
+;;           nothing but letters and digits
+;; RETURNS: a variable whose name is the given string
+
+;; EXAMPLE:
+;; (var "x15") => (make-variable `"x15")
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (var "y2") (make-variable "y2")
+     "(var y2) should return: A Variable with name y2"))
+
+;; STRATEGY: Use Constructor Template for Variable.
+(define (var name)
+  (make-variable name))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; op : OperationName -> Operation
+;; GIVEN:   the name of an operation
+;; RETURNS: the operation with that name.
+
+;; EXAMPLE:
+;; (op "-") => (make-operation "-")
+;; (op "*") => (make-operation "*")
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (op "+") (make-operation "+")
+     "(op +) should return: an Operation with name +"))
+
+;; STRATEGY: Use Constructor Template for Literal.
+(define (op name)
+  (make-operation name))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; call : ArithmeticExpression ArithmeticExpressionList -> Call
+;; GIVEN:   an operator expression and a list of operand expressions
+;; RETURNS: a call expression whose operator and operands are as
+;;             given.
+
+;; EXAMPLES:
+;;(call (op "-") (list (lit 7) (lit 2.5)))
+;;                       => (make-call-exp (op "-")
+;;                                         (list (lit 7) (lit 2.5)))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (call (op "-") (list (lit 7) (lit 2.5)))
+                (make-call-exp (make-operation "-")
+                               (list (make-literal 7)
+                                     (make-literal 2.5)))
+     "(call (op -) (list (lit 7) (lit 2.5)))
+           should return: A Call with operator as -
+                    and operands as a list with 7 and 2.5"))
+
+;; STRATEGY: Use Constructor Template for Call.
+(define (call operator operand)
+  (make-call-exp operator operand))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; call-operator : Call -> ArithmeticExpression
+;; GIVEN:   a call
+;; RETURNS: the operator expression of that call
+
+;; EXAMPLE:
+;; (call-operator (call (op "-")
+;;                      (list (lit 7) (lit 2.5))))
+;;         => (op "-")
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (call-operator (call (op "+")
+                                     (list (lit 10)
+                                           (lit 5.2))))
+                (op "+")
+     "(call-operator (call (op +)(list (lit 10) (lit 5.2))))
+          should return: the Operation +"))
+
+;; STRATEGY: Use Observer Template for Call
+;;                        on exp.
+(define (call-operator exp)
+  (call-exp-operator exp))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; call-operands : Call -> ArithmeticExpressionList
+;; GIVEN:   a call
+;; RETURNS: the operand expressions of that call
+
+;; EXAMPLE:
+;; (call-operands (call (op "-")
+;;                      (list (lit 7) (lit 2.5))))
+;;         => (list (lit 7) (lit 2.5))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (call-operands (call (op "+")
+                                     (list (lit 10)
+                                           (lit 5.2))))
+                (list (lit 10) (lit 5.2))
+     "(call-operands (call (op +)(list (lit 10) (lit 5.2))))
+          should return: the list of operands 10 and 5.2"))
+
+;; STRATEGY: Use Observer Template for Call
+;;                        on exp.
+(define (call-operands exp)
+  (call-exp-operands exp))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; call? : ArithmeticExpression -> Boolean
+;; GIVEN:   an arithmetic expression
+;; RETURNS: true if and only the expression is a call.
+
+;; EXAMPLE:
+;; (call? (op "-"))                                 => #false
+;; (call? (call (op "-") (list (lit 7) (lit 2.5)))) => #true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (call? (op "/"))
+                #false
+     "(call? (op /)) should return: false")
+  (check-equal? (call? (call (op "/")
+                             (list (var "x1"))))
+                #true
+     "(call? (call (op /)(list (lit 10) (lit 2))))
+          should return: true"))
+
+;; STRATEGY: Use Predicates for Call
+;;                        on exp.
+(define (call? exp)
+  (call-exp? exp))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; block : Variable ArithmeticExpression ArithmeticExpression
+;;             -> ArithmeticExpression
+;; GIVEN:   a variable, an expression e0, and an expression e1
+;; RETURNS: a block that defines the variable's value as the
+;;          value of e0; the block's value will be the value of e1.
+
+;; EXAMPLES:
+;; (block (var "x5")
+;;        (lit 5)
+;;        (call (op "*")
+;;              (list (var "x6") (var "x7")))))
+;;                  => (make-block-exp (var "x5")
+;;                                     (lit 5)
+;;                                     (call (op "*")
+;;                                           (list (var "x6")
+;;                                                 (var "x7")))))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (block (var "x")(lit 5)
+                       (call (op "*")(list (var "10") (var "2"))))
+                (make-block-exp (make-variable "x")
+                                (make-literal 5)
+                                (make-call-exp (make-operation "*")
+                                               (list (make-variable "10")
+                                                     (make-variable "2"))))
+      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
+          should return: A Block with var as x, rhs as 5
+                     and a body with call with 10 and 2 multiplied"))
+
+;; STRATEGY: Use Constructor Template for Block.
+(define (block var rhs body)
+  (make-block-exp var rhs body))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; block-var : Block -> Variable
+;; GIVEN:   a block
+;; RETURNS: the variable defined by that block.
+
+;; EXAMPLE:
+;; (block-var (block (var "x5")
+;;                   (lit 5)
+;;                   (call (op "*")
+;;                         (list (var "x6") (var "x7")))))
+;;         => (var "x5")
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (block-var (block (var "x")(lit 5)
+                                  (call (op "*")
+                                        (list (var "10")
+                                              (var "2")))))
+                (var "x")
+      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
+          should return: A variable as x"))
+
+;; STRATEGY: Use Observer Template for Block
+;;                        on b.
+(define (block-var b)
+  (block-exp-var b))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; block-rhs : Block -> ArithmeticExpression
+;; GIVEN:   a block
+;; RETURNS: the expression whose value will become the value of
+;;          the variable defined by that block.
+
+;; EXAMPLE:
+;; (block-rhs (block (var "x5")
+;;                   (lit 5)
+;;                   (call (op "*")
+;;                         (list (var "x6") (var "x7")))))
+;;         => (lit 5)
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (block-rhs (block (var "x")(lit 5)
+                                  (call (op "*")
+                                        (list (var "10")
+                                              (var "2")))))
+                (lit 5)
+      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
+          should return: RHS as 5"))
+
+;; STRATEGY: Use Observer Template for Block
+;;                        on b.
+(define (block-rhs b)
+  (block-exp-rhs b))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; block-body : Block -> ArithmeticExpression
+;; GIVEN:   a block
+;; RETURNS: the expression whose value will become the value of
+;;          the block expression.
+
+;; EXAMPLE:
+;; (block-rhs (block (var "x5")
+;;                   (lit 5)
+;;                   (call (op "*")
+;;                         (list (var "x6") (var "x7")))))
+;;         => (call (op "*") (list (var "x6") (var "x7")))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (block-body (block (var "x")(lit 5)
+                                   (call (op "*")
+                                         (list (var "10")
+                                               (var "2")))))
+                (call (op "*")(list (var "10")(var "2")))
+      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
+          should return: A body as call with 10 and 2 multiplied"))
+
+;; STRATEGY: Use Observer Template for Block
+;;                        on b.
+(define (block-body b)
+  (block-exp-body b))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; block? : ArithmeticExpression -> Boolean
+;; GIVEN:   an arithmetic expression
+;; RETURNS: true if and only the expression is a block.
+
+;; EXAMPLE:
+;; (block? (op "-"))                 => #false
+;; (call? (block (var "x")(lit 5)
+;;               (call (op "*")
+;;               (list (var "10")
+;;                     (var "2"))))) => #true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (block? (op "/"))
+                #false
+    "(block? (op /)) should return: false")
+  (check-equal? (block? (block (var "x")(lit 5)
+                              (call (op "*")
+                                    (list (var "10")
+                                          (var "2")))))
+                #true
+   "(call? (call? (block (var x)(lit 5)(call (op *)(list (var 10)(var 2))))))
+          should return: true"))
+
+;; STRATEGY: Use Predicates for Block
+;;                        on exp.
+(define (block? exp)
+  (block-exp? exp))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; operation-expression? : ArithmeticExpression -> Boolean
+;; GIVEN:   an arithmetic expression
+;; RETURNS: true if and only the expression is an operation expression.
+
+;; EXAMPLES:
+;; (operation-expression? (block (var "z")(var "x")(op "+"))) => #true
+;; (operation-expression? (op "+"))                           => #true
+;; (operation-expression? (block (var "z")(var "x")
+;;                               (call (op "+")
+;;                                     (list (lit 7.2)
+;;                                           (var "x")))))    => #false
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (operation-expression? (op "*"))
+                #true
+    "(operation-expression? (op *)) should return: true")
+  (check-equal? (operation-expression? (block (var "z")(var "x")
+                                              (block (var "y")
+                                                     (lit 7.2)
+                                                     (lit 10))))
+                #false
+    "(operation-expression? A Block having a body as A Block
+             having a body as literal 10 should return: true"))
+
+;; STRATEGY: Use Observer Template for ArithmeticExpression
+;;                                   on aexp.
+(define (operation-expression? aexp)
+  (cond
+    [(operation? aexp)
+     #true]
+    [(block? aexp)
+     (operation-expression? (block-body aexp))]
+    [else #false]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; operands-constant-expression? : ArithmeticExpressionList -> Boolean
+;; GIVEN:   a sequence of arithmetic expressions
+;; RETURNS: true if and only all the operands are constant expressions.
+
+;; EXAMPLES:
+;; (operands-constant-expression? (list (lit "5") (lit "10"))   => #true
+;; (operands-constant-expression? (list (lit "5")
+;;                                      (block (var "x")
+;;                                             (lit "2")
+;;                                             (lit "7"))       => #true
+;; (operands-constant-expression? (list (lit "5")
+;;                                      (call (op "/")
+;;                                            (list (var "y2")
+;;                                                  (lit "7"))) => #false
+;; (operands-constant-expression? (list (lit "10")
+;;                                      (var "x")))             => #false
+
+;; STRATEGY: Use Observer Template for ArithmeticExpressionList
+;;                                   on alist.
+(define (operands-constant-expression? alist)
+  (cond
+    [(empty? alist)
+     #true]
+    [else
+     (and (constant-expression? (first alist))
+          (operands-constant-expression? (rest alist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; constant-expression? : ArithmeticExpression -> Boolean
+;; GIVEN:   an arithmetic expression
+;; RETURNS: true if and only the expression is a constant expression.
+
+;; EXAMPLES:
+;; (constant-expression? (lit "5")) => #true
+;; (constant-expression? (op "+"))                           => #true
+;; (constant-expression? (block (var "z")(var "x")
+;;                               (call (op "+")
+;;                                     (list (lit 7.2)
+;;                                           (var "x")))))    => #false
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (constant-expression? (lit "5"))
+                #true
+    "(constant-expression? (lit 5)) should return: true")
+  (check-equal? (constant-expression? (block (var "x")
+                                             (lit "5")
+                                             (var "x")))
+                #false
+    "(constant-expression? Block with body as Variable)
+              should return: false")
+  (check-equal? (constant-expression? (call (op "*")
+                                            (list (block (var "x")
+                                                         (lit "5")
+                                                         (lit "6")))))
+                #true
+    "(constant-expression? Call with operator * and list of operand
+            having a Block with body as Literal 6)
+              should return: true"))
+
+;; STRATEGY: Use Observer Template for ArithmeticExpression
+;;                                   on aexp.
+(define (constant-expression? aexp)
+  (cond
+    [(literal? aexp)
+     #true]
+    [(call? aexp)
+     (and (operation-expression? (call-operator aexp))
+          (operands-constant-expression? (call-operands aexp)))]
+    [(block? aexp)
+     (constant-expression? (block-body aexp))]
+    [else #false]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; variables-defined-by-operands : ArithmeticExpressionList -> StringList
+;; GIVEN:   a sequence of arithmetic expressions
+;; RETURNS: a list of the names of all variables defined by
+;;            all blocks that occur within the expression list, without
+;;            repetitions, in any order.
+
+;; EXAMPLES:
+
+;; TESTS:
+
+;; STRATEGY: Use Observer Template for ArithmeticExpressionList
+;;                                   on alist.
+(define (variables-defined-by-operands alist)
+  (cond
+    [(empty? alist) empty]
+    [else
+     (append (variables-defined-by (first alist))
+             (variables-defined-by-operands (rest alist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; variables-list-defined-by : ArithmeticExpression -> StringList
+;; GIVEN:   an arithmetic expression
+;; RETURNS: a list of the names of all variables defined by
+;;            all blocks that occur within the expression, with
+;;            repetitions, in any order.
+
+;; EXAMPLES:
+;; (variables-list-defined-by
+;;               (block (var "x")
+;;                      (var "y")
+;;                      (call (block (var "z")
+;;                                   (var "x")
+;;                                   (op "+"))
+;;                            (list (block (var "x")
+;;                                         (lit 5)
+;;                                         (var "x"))
+;;                                  (var "x")))))
+;;                  => (list "x" "z" "x")
+
+;; TESTS:
+
+;; STRATEGY: Use Observer Template for ArithmeticExpression
+;;                                on aexp.
+(define (variables-list-defined-by aexp)
+  (cond
+    [(call? aexp)
+     (append (variables-list-defined-by (call-operator aexp))
+             (variables-defined-by-operands (call-operands aexp)))]
+    [(block? aexp)
+     (append (list (variable-name (block-var aexp)))
+             (variables-list-defined-by (block-rhs aexp))
+             (variables-list-defined-by (block-body aexp)))]
+    [else empty]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; remove-duplicates : StringList -> StringList
+;; GIVEN:   a StringList
+;; RETURNS: the same StringList without any duplicate elements.
+
+;; EXAMPLES:
+
+;; TESTS:
+
+;; STRATEGY: Use Observer Template for StringList on alist.
+(define (remove-duplicates alist)
+  (cond
+    [(empty? alist)
+     empty]
+    [(member? (first alist) (rest alist))
+     (remove-duplicates (rest alist))]
+    [else
+     (list* (first alist) (remove-duplicates (rest alist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; variables-defined-by : ArithmeticExpression -> StringList
+;; GIVEN:   an arithmetic expression
+;; RETURNS: a list of the names of all variables defined by
+;;            all blocks that occur within the expression, without
+;;            repetitions, in any order.
+
+;; EXAMPLES:
+;; (variables-defined-by (block (var "x")
+;;                              (var "y")
+;;                              (call (block (var "z")
+;;                                           (var "x")
+;;                                           (op "+"))
+;;                                    (list (block (var "x")
+;;                                                 (lit 5)
+;;                                                 (var "x"))
+;;                                          (var "x")))))
+;;                                   => (list "x" "z") or (list "z" "x")
+
+;; TESTS:
+(begin-for-test
+  (check-equal?
+   (variables-defined-by (call (block (var "a")
+                                      (lit "2")
+                                      (block (var "a")
+                                             (lit "3")
+                                             (block (var "a")
+                                                    (lit "4")
+                                                    (op "*"))))
+                                      (list (var "x")
+                                            (call (block (var "z")
+                                                         (var "x")
+                                                         (op "+"))
+                                                  (list (lit "1")))
+                                            (block (var "x")
+                                                   (var "y")
+                                                   (lit "5")))))
+   (list "a" "z" "x")
+   "(variables-defined-by ArithmeticExpression with 5 Blocks
+       where 3 Variables defined are a and 2 are x and z
+              should return: (list a z x)"))
+
+;; STRATEGY: Use Simpler Functions.
+(define (variables-defined-by aexp)
+  (remove-duplicates (variables-list-defined-by aexp)))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; variables-used-by-operands : ArithmeticExpressionList -> StringList
+;; GIVEN:   a sequence of arithmetic expressions
+;; RETURNS: a list of the names of all variables used by
+;;           expressions that occur within the expression list
+;;           not including the ones defined in a block unless they are used.
+
+;; EXAMPLES:
+;; 
+
+;; TESTS:
+
+;; STRATEGY: Use Observer Template for ArithmeticExpressionList
+;;                                   on alist.
+(define (variables-used-by-operands alist)
+  (cond
+    [(empty? alist) empty]
+    [else
+     (append (variables-used-by (first alist))
+             (variables-used-by-operands (rest alist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; variables-used-by : ArithmeticExpression -> StringList
+;; GIVEN:   an arithmetic expression
+;; RETURNS: a list of the names of all variables used in
+;;           the expression, including variables used in a block
+;;           on the right hand side of its definition or in its body,
+;;           but not including variables defined by a block unless
+;;           they are also used.
+
+;; EXAMPLES:
+;; (variables-used-by
+;;    (block (var "x")
+;;           (var "y")
+;;           (call (block (var "z")
+;;                        (var "x")
+;;                        (op "+"))
+;;                 (list (block (var "x")
+;;                              (lit 5)
+;;                              (var "x"))
+;;                       (var "x")))))
+;;              => (list "x" "x" "x" "y") or (list "y" "x" "x" "x"))
+
+;; TESTS:
+(begin-for-test
+  (check-equal?
+   (variables-used-by (call (block (var "a")
+                                   (lit "2")
+                                   (block (var "a")
+                                          (lit "3")
+                                          (block (var "a")
+                                                 (lit "4")
+                                                 (op "*"))))
+                                   (list (var "x")
+                                         (call (block (var "z")
+                                                      (var "x")
+                                                      (op "+"))
+                                               (list (lit "1")))
+                                         (block (var "x")
+                                                (var "y")
+                                                (lit "5")))))
+   (list "x" "x" "y")
+   "(variables-defined-by ArithmeticExpression with 5 Blocks
+       where there are 5 variables defined and 3 used
+              should return: (list x x y)"))
+
+;; STRATEGY: Use Observer Template for ArithmeticExpression
+;;                                on aexp.
+(define (variables-used-by aexp)
+  (cond
+    [(variable? aexp)
+     (list (variable-name aexp))]
+    [(call? aexp)
+     (append (variables-used-by (call-operator aexp))
+             (variables-used-by-operands (call-operands aexp)))]
+    [(block? aexp)
+     (append (variables-used-by (block-rhs aexp))
+             (variables-used-by (block-body aexp)))]
+    [else empty]))
