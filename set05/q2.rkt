@@ -33,7 +33,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-;; An ArithmeticExpression is one of
+;; An ArithmeticExpression is one of the following:
 ;;     -- a Literal
 ;;     -- a Variable
 ;;     -- an Operation
@@ -50,7 +50,7 @@
         ((call? exp) ...)
         ((block? exp) ...)))
 
-;; A sequence of ArithmeticExpressions (ArithmeticExpressionsList)
+;; A sequence of ArithmeticExpressions (ArithmeticExpressionList)
 ;;           is represented as a list of a ArithmeticExpressions.
 
 ;; CONSTRUCTOR TEMPLATES:
@@ -89,12 +89,30 @@
     [else (... (first a)
                (stl-fn (rest a)))]))
 
+;; A sequence of Real numbers (RealList)
+;;           is represented as a list of a Real numbers.
+
+;; CONSTRUCTOR TEMPLATES:
+;; empty             -- the empty sequence
+;; (cons r req)
+;;   WHERE:
+;;    s    : Real     is the first Real number in the sequence.
+;;    seq  : RealList is the the rest of the sequence.
+
+;; OBSERVER TEMPLATE:
+;; rl-fn : StringList -> ??
+#;
+(define (rl-fn a)
+  (cond
+    [(empty? a) ...]
+    [else (... (first a)
+               (rl-fn (rest a)))]))
+
 ;; An OperationName is represented as one of the following strings:
 ;;     -- "+"      (indicating addition)
 ;;     -- "-"      (indicating subtraction)
 ;;     -- "*"      (indicating multiplication)
 ;;     -- "/"      (indicating division)
-;;
 
 ;; OBSERVER TEMPLATE:
 ;; operation-name-fn : OperationName -> ??
@@ -382,13 +400,13 @@
 ;; TESTS:
 (begin-for-test
   (check-equal? (block (var "x")(lit 5)
-                       (call (op "*")(list (var "10") (var "2"))))
+                       (call (op "*")(list (var "x10") (var "y2"))))
                 (make-block-exp (make-variable "x")
                                 (make-literal 5)
                                 (make-call-exp (make-operation "*")
-                                               (list (make-variable "10")
-                                                     (make-variable "2"))))
-      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
+                                               (list (make-variable "x10")
+                                                     (make-variable "y2"))))
+      "(block (var x)(lit 5)(call (op *)(list (var x10) (var y2))))
           should return: A Block with var as x, rhs as 5
                      and a body with call with 10 and 2 multiplied"))
 
@@ -412,10 +430,10 @@
 (begin-for-test
   (check-equal? (block-var (block (var "x")(lit 5)
                                   (call (op "*")
-                                        (list (var "10")
-                                              (var "2")))))
+                                        (list (var "x10")
+                                              (var "y2")))))
                 (var "x")
-      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
+      "(block (var x)(lit 5)(call (op *)(list (var x10) (var y2))))
           should return: A variable as x"))
 
 ;; STRATEGY: Use Observer Template for Block
@@ -440,10 +458,10 @@
 (begin-for-test
   (check-equal? (block-rhs (block (var "x")(lit 5)
                                   (call (op "*")
-                                        (list (var "10")
-                                              (var "2")))))
+                                        (list (var "x10")
+                                              (var "y2")))))
                 (lit 5)
-      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
+      "(block (var x)(lit 5)(call (op *)(list (var x10) (var y2))))
           should return: RHS as 5"))
 
 ;; STRATEGY: Use Observer Template for Block
@@ -468,11 +486,11 @@
 (begin-for-test
   (check-equal? (block-body (block (var "x")(lit 5)
                                    (call (op "*")
-                                         (list (var "10")
-                                               (var "2")))))
-                (call (op "*")(list (var "10")(var "2")))
-      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
-          should return: A body as call with 10 and 2 multiplied"))
+                                         (list (var "x10")
+                                               (var "y2")))))
+                (call (op "*")(list (var "x10")(var "y2")))
+      "(block (var x)(lit 5)(call (op *)(list (var x10) (var y2))))
+          should return: A body as call with x10 and y2 multiplied"))
 
 ;; STRATEGY: Use Observer Template for Block
 ;;                        on b.
@@ -488,8 +506,8 @@
 ;; (block? (op "-"))                 => #false
 ;; (call? (block (var "x")(lit 5)
 ;;               (call (op "*")
-;;               (list (var "10")
-;;                     (var "2"))))) => #true
+;;               (list (var "x10")
+;;                     (var "y2"))))) => #true
 
 ;; TESTS:
 (begin-for-test
@@ -498,10 +516,10 @@
     "(block? (op /)) should return: false")
   (check-equal? (block? (block (var "x")(lit 5)
                               (call (op "*")
-                                    (list (var "10")
-                                          (var "2")))))
+                                    (list (var "x10")
+                                          (var "y2")))))
                 #true
-   "(call? (call? (block (var x)(lit 5)(call (op *)(list (var 10)(var 2))))))
+   "(call? (call? (block (var x)(lit 5)(call (op *)(list (var x10)(var y2))))))
           should return: true"))
 
 ;; STRATEGY: Use Predicates for Block
@@ -551,17 +569,17 @@
 ;; RETURNS: true if and only all the operands are constant expressions.
 
 ;; EXAMPLES:
-;; (operands-constant-expression? (list (lit "5") (lit "10"))   => #true
-;; (operands-constant-expression? (list (lit "5")
+;; (operands-constant-expression? (list (lit 5) (lit 10))     => #true
+;; (operands-constant-expression? (list (lit 5)
 ;;                                      (block (var "x")
-;;                                             (lit "2")
-;;                                             (lit "7"))       => #true
-;; (operands-constant-expression? (list (lit "5")
+;;                                             (lit 2)
+;;                                             (lit 7))       => #true
+;; (operands-constant-expression? (list (lit 5)
 ;;                                      (call (op "/")
 ;;                                            (list (var "y2")
-;;                                                  (lit "7"))) => #false
-;; (operands-constant-expression? (list (lit "10")
-;;                                      (var "x")))             => #false
+;;                                                  (lit 7))) => #false
+;; (operands-constant-expression? (list (lit 10)
+;;                                      (var "x")))           => #false
 
 ;; STRATEGY: Use Observer Template for ArithmeticExpressionList
 ;;                                   on alist.
@@ -579,7 +597,7 @@
 ;; RETURNS: true if and only the expression is a constant expression.
 
 ;; EXAMPLES:
-;; (constant-expression? (lit "5")) => #true
+;; (constant-expression? (lit 5)) => #true
 ;; (constant-expression? (op "+"))                           => #true
 ;; (constant-expression? (block (var "z")(var "x")
 ;;                               (call (op "+")
@@ -588,19 +606,19 @@
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (constant-expression? (lit "5"))
+  (check-equal? (constant-expression? (lit 5))
                 #true
     "(constant-expression? (lit 5)) should return: true")
   (check-equal? (constant-expression? (block (var "x")
-                                             (lit "5")
+                                             (lit 5)
                                              (var "x")))
                 #false
     "(constant-expression? Block with body as Variable)
               should return: false")
   (check-equal? (constant-expression? (call (op "*")
                                             (list (block (var "x")
-                                                         (lit "5")
-                                                         (lit "6")))))
+                                                         (lit 5)
+                                                         (lit 6)))))
                 #true
     "(constant-expression? Call with operator * and list of operand
             having a Block with body as Literal 6)
@@ -716,20 +734,20 @@
 (begin-for-test
   (check-equal?
    (variables-defined-by (call (block (var "a")
-                                      (lit "2")
+                                      (lit 2)
                                       (block (var "a")
-                                             (lit "3")
+                                             (lit 3)
                                              (block (var "a")
-                                                    (lit "4")
+                                                    (lit 4)
                                                     (op "*"))))
                                       (list (var "x")
                                             (call (block (var "z")
                                                          (var "x")
                                                          (op "+"))
-                                                  (list (lit "1")))
+                                                  (list (lit 1)))
                                             (block (var "x")
                                                    (var "y")
-                                                   (lit "5")))))
+                                                   (lit 5)))))
    (list "a" "z" "x")
    "(variables-defined-by ArithmeticExpression with 5 Blocks
        where 3 Variables defined are a and 2 are x and z
@@ -786,20 +804,20 @@
 (begin-for-test
   (check-equal?
    (variables-used-by (call (block (var "a")
-                                   (lit "2")
+                                   (lit 2)
                                    (block (var "a")
-                                          (lit "3")
+                                          (lit 3)
                                           (block (var "a")
-                                                 (lit "4")
+                                                 (lit 4)
                                                  (op "*"))))
                                    (list (var "x")
                                          (call (block (var "z")
                                                       (var "x")
                                                       (op "+"))
-                                               (list (lit "1")))
+                                               (list (lit 1)))
                                          (block (var "x")
                                                 (var "y")
-                                                (lit "5")))))
+                                                (lit 5)))))
    (list "x" "x" "y")
    "(variables-defined-by ArithmeticExpression with 5 Blocks
        where there are 5 variables defined and 3 used
@@ -818,3 +836,213 @@
      (append (variables-used-by (block-rhs aexp))
              (variables-used-by (block-body aexp)))]
     [else empty]))
+
+;;;;;;;;;;;;;;;;;;;;;
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; adding : RealList -> Real
+;; GIVEN:   a sequence of Real numbers
+;; RETURNS: the addition of all the numbers in the list.
+
+;; EXMAPLES:
+;; (adding (list 1 2.2 5 24)) => 32.2
+
+;; STRATEGY: Use Observer Template for RealList on lst.
+(define (adding lst)
+  (cond
+    [(empty? lst) 0]
+    [else (+ (first lst) (adding (rest lst)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; subtracting : RealList -> Real
+;; GIVEN:   a sequence of Real numbers
+;; RETURNS: the subtraction of all the numbers in the list.
+
+;; EXMAPLES:
+;; (subtracting (list 10 5 2)) => 3
+
+;; STRATEGY: Cases on length of lst
+;;            then Use Observer Template for RealList on lst.
+(define (subtracting lst)
+  (cond
+    [(empty? lst) 0]
+    [(= (length lst) 1)
+     (- (first lst))]
+    [else (- (first lst) (adding (rest lst)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; multiplying : RealList -> Real
+;; GIVEN:   a sequence of Real numbers
+;; RETURNS: the multiplication of all the numbers in the list.
+
+;; EXMAPLES:
+;; (multiplying (list 1 2 3 4 5)) => 120
+
+;; STRATEGY: Use Observer Template for RealList on lst.
+(define (multiplying lst)
+  (cond
+    [(empty? lst) 1]
+    [else (* (first lst) (multiplying (rest lst)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; dividing : RealList -> Real
+;; GIVEN:   a sequence of Real numbers
+;; RETURNS: the division of all the numbers in the list.
+
+;; EXMAPLES:
+;; (dividing (list 10 5 2)) => 1
+
+;; STRATEGY: Cases on length of lst
+;;            then Use Observer Template for RealList on lst.
+(define (dividing lst)
+  (cond
+    [(empty? lst) 1]
+    [(= (length lst) 1)
+     (/ (first lst))]
+    [else (/ (first lst) (multiplying (rest lst)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; compute : OperationName RealList -> Real
+;; GIVEN:   an OperationName and a sequence of Real numbers
+;; RETURNS: the value when the operation is applied on all
+;;             the numbers of the list.
+
+;; EXMAPLES:
+;; (compute "/" (list 10 5 2)) => 1
+;; (compute "+" (list 10 5 2)) => 17
+;; (compute "*" (list 10 5 2)) => 100
+
+;; STRATEGY: Cases on length of lst
+;;            then Use Observer Template for RealList on lst.
+(define (compute optr opnds)
+  (cond
+    [(string=? "+" optr)
+     (adding opnds)]
+    [(string=? "*" optr)
+     (multiplying opnds)]
+    [(string=? "-" optr)
+     (subtracting opnds)]
+    [(string=? "/" optr)
+     (dividing opnds)]))
+
+(define (evaluate exp num)
+  (cond
+    [(empty? exp) (first num)]
+    [(operation? (first exp))
+     (evaluate (rest exp)
+               (list (compute (operation-name (first exp)) num)))]
+    [else
+     (evaluate (rest exp)
+               (list* (literal-value (first exp))
+                       num))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; operation-expression-value : ArithmeticExpression
+;;                                    -> ArithmeticExpressionList
+;; GIVEN:   an arithmetic expression
+;; RETURNS: a list of arithmetic expressions that will consist only
+;;           Operations that contribute to the value
+;;           of the expression.
+
+;; EXAMPLES:
+;; (operation-expression-value (op "*"))  => (list (make-operation "*"))
+;; (operation-expression-value
+;;  (block (var "x") (lit 2) (op "+")))   => (list (make-operation "+"))
+
+;; STRATEGY: Use Observer Template for ArithmeticExpression
+;;                                   on aexp.
+(define (operation-expression-value aexp)
+  (cond
+    [(operation? aexp)
+     (list aexp)]
+    [(block? aexp)
+     (operation-expression-value (block-body aexp))]
+    [else empty]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; operands-constant-expression-value : ArithmeticExpressionList
+;;                                         -> ArithmeticExpressionList
+;; GIVEN:   a sequence of arithmetic expressions
+;; RETURNS: a list of arithmetic expressions that will consist either
+;;           Literals or Operations that contribute to the value
+;;           of the expression from the operands.
+
+;; EXAMPLES:
+;; (operands-constant-expression-value
+;;   (list (lit 10) (lit 20)))           => (list (make-literal 10)
+;;                                                (make-literal 20))
+;; (operands-constant-expression-value
+;;   (list (lit 10)
+;;         (call (op "*") (list (lit 40) (lit 30)))
+;;         (lit 20)))
+;;                                       => (list (make-literal 10)
+;;                                                (make-operation "*")
+;;                                                (make-literal 40)
+;;                                                (make-literal 30)
+;;                                                (make-literal 20))
+
+;; STRATEGY: Use Observer Template for ArithmeticExpressionList
+;;                                   on alist.
+(define (operands-constant-expression-value alist)
+  (cond
+    [(empty? alist) empty]
+    [else
+     (append (get-constant-expression (first alist))
+             (operands-constant-expression-value (rest alist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-constant-expression : ArithmeticExpression
+;;                                      -> ArithmeticExpressionList
+;; GIVEN:   an arithmetic expression
+;; RETURNS: a list of arithmetic expressions that will consist either
+;;           Literals or Operations that contribute to the value
+;;           of the expression.
+
+;; EXAMPLES:
+;; (get-constant-expression
+;;   (block (var "x0") (lit 5)
+;;          (call (block (var "y") (lit 2) (op "-"))
+;;                (list (lit 20) (lit 10)))))
+;;                                  => (list (make-operation "-")
+;;                                           (make-literal 20)
+;;;;                                         (make-literal 10))
+
+;; STRATEGY: Use Observer Template for ArithmeticExpression
+;;                                on aexp
+(define (get-constant-expression aexp)
+  (cond
+    [(literal? aexp)
+     (list aexp)]
+    [(call? aexp)
+     (append (operation-expression-value (call-operator aexp))
+             (operands-constant-expression-value (call-operands aexp)))]
+    [(block? aexp)
+     (get-constant-expression (block-body aexp))]
+    [else empty]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; constant-expression-value : ArithmeticExpression -> Real
+;; GIVEN:   an arithmetic expression
+;; WHERE:   the expression is a constant expression,
+;; RETURNS: the numerical value of the expression.
+
+;; EXAMPLES:
+;; (constant-expression-value
+;;  (call (op "/") (list (lit 15) (lit 3))))              => 5
+;; (constant-expression-value
+;;  (block (var "x")
+;;         (var "y")
+;;         (call (block (var "z")
+;;                      (call (op "*")
+;;                            (list (var "x") (var "y")))
+;;                      (op "+"))
+;;                (list (lit 3)
+;;                      (call (op "*")
+;;                            (list (lit 4) (lit 5))))))) => 23      
+
+;; TESTS:
+
+;; STRATEGY: Combine Simpler Functions.
+(define (constant-expression-value aexp)
+  (evaluate (reverse (get-constant-expression aexp))
+            empty))

@@ -30,7 +30,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-;; An ArithmeticExpression is one of
+;; An ArithmeticExpression is one of the following:
 ;;     -- a Literal
 ;;     -- a Variable
 ;;     -- an Operation
@@ -47,7 +47,7 @@
         ((call? exp) ...)
         ((block? exp) ...)))
 
-;; A sequence of ArithmeticExpressions (ArithmeticExpressionsList)
+;; A sequence of ArithmeticExpressions (ArithmeticExpressionList)
 ;;           is represented as a list of a ArithmeticExpressions.
 
 ;; CONSTRUCTOR TEMPLATES:
