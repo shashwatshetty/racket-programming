@@ -25,7 +25,8 @@
          block?
          constant-expression?
          variables-used-by
-         variables-defined-by)
+         variables-defined-by
+         constant-expression-value)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -519,7 +520,8 @@
                                     (list (var "x10")
                                           (var "y2")))))
                 #true
-   "(call? (call? (block (var x)(lit 5)(call (op *)(list (var x10)(var y2))))))
+   "(call? (call? (block (var x)(lit 5)
+                         (call (op *)(list (var x10)(var y2))))))
           should return: true"))
 
 ;; STRATEGY: Use Predicates for Block
@@ -602,7 +604,7 @@
 ;; (constant-expression? (block (var "z")(var "x")
 ;;                               (call (op "+")
 ;;                                     (list (lit 7.2)
-;;                                           (var "x")))))    => #false
+;;                                           (var "x")))))   => #false
 
 ;; TESTS:
 (begin-for-test
@@ -837,8 +839,6 @@
              (variables-used-by (block-body aexp)))]
     [else empty]))
 
-;;;;;;;;;;;;;;;;;;;;;
-
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; adding : RealList -> Real
 ;; GIVEN:   a sequence of Real numbers
@@ -925,16 +925,43 @@
     [(string=? "/" optr)
      (dividing opnds)]))
 
-(define (evaluate exp num)
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-real-list : ArithmeticExpressionList -> RealList
+;; GIVEN:   an sequence of arithmetic expressions
+;; WHERE:   the list contains only Literals.
+;; RETURNS: a list of real numbers which are the value of the Literals.
+
+;; EXAMPLES:
+;; (get-real-list (list (lit 2) (lit 3)))    => (list 2 3)
+;; (evaluate (list (lit 2) (lit 2) (lit 2))) => (list 2 2 2)
+
+;; STRATEGY: Use Observer Template for ArithmeticExpressionList
+;;                                    on alist.
+(define (get-real-list alist)
   (cond
-    [(empty? exp) (first num)]
-    [(operation? (first exp))
-     (evaluate (rest exp)
-               (list (compute (operation-name (first exp)) num)))]
+    [(empty? alist) empty]
     [else
-     (evaluate (rest exp)
-               (list* (literal-value (first exp))
-                       num))]))
+     (list* (literal-value (first alist))
+            (get-real-list (rest alist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; evaluate : ArithmeticExpressionList -> ArithmeticExpressionList
+;; GIVEN:   an sequence of arithmetic expressions
+;; WHERE:   the list begins with an Operation and the rest
+;;            are Literals.
+;; RETURNS: a list of arithmetic expressions, having only a Literal
+;;            with the value of the given expression.
+
+;; EXAMPLES:
+;; (evaluate (list (op "+") (lit 2) (lit 3))) => (list (make-literal 5))
+;; (evaluate (list (op "*") (lit 2)
+;;                          (lit 2)
+;;                          (lit 2)))         => (list (make-literal 8))
+
+;; STRATEGY: Combine Simpler Functions.
+(define (evaluate exp)
+  (list (lit (compute (operation-name (first exp))
+                      (get-real-list (rest exp))))))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; operation-expression-value : ArithmeticExpression
@@ -956,15 +983,14 @@
     [(operation? aexp)
      (list aexp)]
     [(block? aexp)
-     (operation-expression-value (block-body aexp))]
-    [else empty]))
+     (operation-expression-value (block-body aexp))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; operands-constant-expression-value : ArithmeticExpressionList
 ;;                                         -> ArithmeticExpressionList
 ;; GIVEN:   a sequence of arithmetic expressions
-;; RETURNS: a list of arithmetic expressions that will consist either
-;;           Literals or Operations that contribute to the value
+;; RETURNS: a list of arithmetic expressions that will consist only
+;;           Literals that contribute to the value
 ;;           of the expression from the operands.
 
 ;; EXAMPLES:
@@ -973,12 +999,10 @@
 ;;                                                (make-literal 20))
 ;; (operands-constant-expression-value
 ;;   (list (lit 10)
-;;         (call (op "*") (list (lit 40) (lit 30)))
+;;         (call (op "*") (list (lit 4) (lit 3)))
 ;;         (lit 20)))
 ;;                                       => (list (make-literal 10)
-;;                                                (make-operation "*")
-;;                                                (make-literal 40)
-;;                                                (make-literal 30)
+;;                                                (make-literal 12)
 ;;                                                (make-literal 20))
 
 ;; STRATEGY: Use Observer Template for ArithmeticExpressionList
@@ -994,18 +1018,15 @@
 ;; get-constant-expression : ArithmeticExpression
 ;;                                      -> ArithmeticExpressionList
 ;; GIVEN:   an arithmetic expression
-;; RETURNS: a list of arithmetic expressions that will consist either
-;;           Literals or Operations that contribute to the value
-;;           of the expression.
+;; RETURNS: a list of arithmetic expressions consisting of only
+;;           a single Literal having the value of the expression.
 
 ;; EXAMPLES:
 ;; (get-constant-expression
 ;;   (block (var "x0") (lit 5)
 ;;          (call (block (var "y") (lit 2) (op "-"))
 ;;                (list (lit 20) (lit 10)))))
-;;                                  => (list (make-operation "-")
-;;                                           (make-literal 20)
-;;;;                                         (make-literal 10))
+;;                                  => (list (make-literal 10))
 
 ;; STRATEGY: Use Observer Template for ArithmeticExpression
 ;;                                on aexp
@@ -1014,11 +1035,11 @@
     [(literal? aexp)
      (list aexp)]
     [(call? aexp)
-     (append (operation-expression-value (call-operator aexp))
-             (operands-constant-expression-value (call-operands aexp)))]
+     (evaluate (append
+                (operation-expression-value (call-operator aexp))
+                (operands-constant-expression-value (call-operands aexp))))]
     [(block? aexp)
-     (get-constant-expression (block-body aexp))]
-    [else empty]))
+     (get-constant-expression (block-body aexp))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; constant-expression-value : ArithmeticExpression -> Real
@@ -1038,11 +1059,61 @@
 ;;                      (op "+"))
 ;;                (list (lit 3)
 ;;                      (call (op "*")
+
 ;;                            (list (lit 4) (lit 5))))))) => 23      
 
 ;; TESTS:
+(begin-for-test
+  (check-equal? (constant-expression-value
+                 (call (op "+")
+                       (list (call (op "-")
+                                   (list (lit 10)
+                                         (lit 6)))
+                             (call (op "/")
+                                   (list (lit 10)
+                                         (lit 5)))
+                             (call (op "*")
+                                   (list (lit 4)
+                                         (lit 2))))))
+                14
+     "(constant-expression-value with an expression
+         equivalent to racket expression
+           (+(- 10 6)(/ 10 5)(* 4 2))
+              should return: 14")
+  (check-equal? (constant-expression-value
+                 (call (block (var "x")
+                              (lit 5)
+                              (op "+"))
+                       (list (call (op "-")
+                                   (list (lit 1)))
+                             (call (op "/")
+                                   (list (lit 5)))
+                             (call (op "*")
+                                   (list (lit 4)
+                                         (lit 2))))))
+                7.2
+     "(constant-expression-value with an expression
+         equivalent to racket expression
+           (+(- 1)(/ 5)(* 4 2))
+              should return: 7.2")
+  (check-equal? (constant-expression-value
+                 (call (block (var "x")
+                              (lit 5)
+                              (op "+"))
+                       (list (call (op "-")
+                                   (list))
+                             (call (op "/")
+                                   (list))
+                             (block (var "y")
+                                    (lit 3)
+                                    (call (op "*")
+                                          (list))))))
+                2
+     "(constant-expression-value with an expression
+         equivalent to racket expression
+           (+(-)(/)(*))
+              should return: 2"))
 
 ;; STRATEGY: Combine Simpler Functions.
 (define (constant-expression-value aexp)
-  (evaluate (reverse (get-constant-expression aexp))
-            empty))
+   (literal-value (first (get-constant-expression aexp))))
