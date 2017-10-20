@@ -1,11 +1,11 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-reader.ss" "lang")((modname q2) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname q2) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require rackunit)
 (require "extras.rkt")
 (require 2htdp/image)
 (require 2htdp/universe)
-(check-location "04" "q2.rkt")
+(check-location "06" "q2.rkt")
 
 (provide simulation
          initial-world
@@ -235,7 +235,7 @@
                             1
                             0
                             (make-select-ball 0 0))
-     "(initial-world 1) should return: world at initial position
+                "(initial-world 1) should return: world at initial position
              in a ready to serve state."))
 
 ;; STRATEGY: Use Constructor Template for World.
@@ -274,7 +274,7 @@
                              0
                              (make-select-ball 0 0)))
                 #false
-     "(update-serve-ready (World with world-ready-to-serve? = true))
+                "(update-serve-ready (World with world-ready-to-serve? = true))
          should return: false"))
 
 ;; STRATEGY: Use Observer Template for World
@@ -308,7 +308,7 @@
                              0
                              (make-select-ball 0 0)))
                 #true
-     "(update-serve-ready (World with world-in-rally? = false))
+                "(update-serve-ready (World with world-in-rally? = false))
          should return: true"))
 
 ;; STRATEGY: Use Observer Template for World
@@ -336,7 +336,7 @@
 (begin-for-test
   (check-equal? (ball-hitting-left-wall? (make-ball 2 50 -3 9))
                 #true
-    "(ball-hitting-left-wall? (make-ball 2 50 -3 9))
+                "(ball-hitting-left-wall? (make-ball 2 50 -3 9))
           should return: true"))
 
 ;; STRATEGY: Use Observer Template for Ball
@@ -359,7 +359,7 @@
 (begin-for-test
   (check-equal? (ball-hitting-right-wall? (make-ball 400 50 3 -9))
                 #false
-    "(ball-hitting-right-wall? (make-ball 400 50 3 -9))
+                "(ball-hitting-right-wall? (make-ball 400 50 3 -9))
           should return: false"))
 
 ;; STRATEGY: Use Observer Template for Ball
@@ -382,7 +382,7 @@
 (begin-for-test
   (check-equal? (ball-hitting-top-wall? (make-ball 20 8 3 -9))
                 #true
-    "(ball-hitting-top-wall? (make-ball 20 8 3 -9))
+                "(ball-hitting-top-wall? (make-ball 20 8 3 -9))
           should return: true"))
 
 ;; STRATEGY: Use Observer Template for Ball
@@ -405,7 +405,7 @@
 (begin-for-test
   (check-equal? (ball-hitting-bottom-wall? (make-ball 150 350 3 -9))
                 #false
-    "(ball-hitting-bottom-wall? (make-ball 150 350 3 -9))
+                "(ball-hitting-bottom-wall? (make-ball 150 350 3 -9))
           should return: false"))
 
 ;; STRATEGY: Use Observer Template for Ball
@@ -424,15 +424,10 @@
 ;; (any-ball-hitting-bottom-wall? (make-ball 20 645 3 9))   => #true
 ;; (any-ball-hitting-bottom-wall? (make-ball 150 350 3 -9)) => #false
 
-;; STRATEGY: Use Observer Template for BallList
-;;              on blist.
+;; STRATEGY: Use HOF ormap on blist.
 (define (any-ball-hitting-bottom-wall? blist)
-  (cond
-    [(empty? blist)
-     #false]
-    [else
-     (or (ball-hitting-bottom-wall? (first blist))
-         (any-ball-hitting-bottom-wall? (rest blist)))]))
+  (ormap ball-hitting-bottom-wall?
+         blist))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; disappear-ball : BallList -> BallList
@@ -450,23 +445,17 @@
   (check-equal? (disappear-ball (list (make-ball 20 645 3 9)
                                       (make-ball 150 350 3 -9)))
                 (list (make-ball 150 350 3 -9))
-     "(disappear-ball with BallList having one ball colliding
+                "(disappear-ball with BallList having one ball colliding
           with bottom wall should return list with that ball removed"))
 
-;; STRATEGY: Use Observer Template for BallList
-;;              on blist.
+;; STRATEGY: Use HOF filter on blist.
 (define (disappear-ball blist)
-  (cond
-    [(empty? blist)
-     empty]
-    [(ball-hitting-bottom-wall? (first blist))
-     (disappear-ball (rest blist))]
-    [else
-     (list* (first blist) (disappear-ball (rest blist)))]))
+  (filter (lambda (b) (not (ball-hitting-bottom-wall? b)))
+          blist))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; ball-hitting-racket? : Ball Racket -> Boolean
-;; GIVEN:   a ball
+;; GIVEN:   a ball and a racket.
 ;; RETURNS: true iff the ball is colliding with the
 ;;            racket in the next tick.
 
@@ -481,13 +470,13 @@
   (check-equal? (ball-hitting-racket? (make-ball 100 293 3 9)
                                       (make-racket 120 300 0 0 #false 0 0))
                 #true
-    "(ball-hitting-racket? (make-ball 100 293 3 9)
+                "(ball-hitting-racket? (make-ball 100 293 3 9)
                            (make-racket 120 300 0 0 #false 0 0))
           should return: true")
   (check-equal? (ball-hitting-racket? (make-ball 150 350 3 -9)
                                       (make-racket 20 645 3 9 #false 0 0))
                 #false
-    "(ball-hitting-racket? (make-ball 100 293 3 9)
+                "(ball-hitting-racket? (make-ball 100 293 3 9)
                            (make-racket 120 300 0 0 #false 0 0))
           should return: false"))
 
@@ -496,7 +485,7 @@
 ;;                racket-x racket-vx racket-y racket-vy.
 (define (ball-hitting-racket? ball racket)
   (and (>= (+ (ball-y ball) (ball-vy ball))
-          (+ (racket-y racket) (racket-vy racket)))
+           (+ (racket-y racket) (racket-vy racket)))
        (> (racket-y racket) (ball-y ball))
        (<= (+ (ball-x ball) (ball-vx ball))
            (+ (racket-x racket) (racket-vx racket) RACKET-MID-LENGTH))
@@ -519,24 +508,24 @@
 (begin-for-test
   (check-equal? (update-ball-x (make-ball 100 293 3 9))
                 103
-    "(update-ball-x (make-ball 100 293 3 9))
+                "(update-ball-x (make-ball 100 293 3 9))
           should return: 103")
   (check-equal? (update-ball-x (make-ball 423 50 3 9))
                 424
-    "(update-ball-x (make-ball 100 293 3 9))
+                "(update-ball-x (make-ball 100 293 3 9))
           should return: 123")
   (check-equal? (update-ball-x (make-ball 2 50 -3 9))
                 1
-    "(update-ball-x (make-ball 100 293 3 9))
+                "(update-ball-x (make-ball 100 293 3 9))
           should return: 123"))
 
 ;; STRATEGY: Cases on if ball hits walls along the x-axis.
 (define (update-ball-x ball)
   (cond
     [(ball-hitting-left-wall? ball)
-         (* (+ (ball-x ball) (ball-vx ball)) -1)]
+     (* (+ (ball-x ball) (ball-vx ball)) -1)]
     [(ball-hitting-right-wall? ball)
-         (- (* 2 COURT-X-CORD) (+ (ball-x ball) (ball-vx ball)))]
+     (- (* 2 COURT-X-CORD) (+ (ball-x ball) (ball-vx ball)))]
     [else (+ (ball-x ball) (ball-vx ball))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
@@ -553,11 +542,11 @@
 (begin-for-test
   (check-equal? (update-ball-y (make-ball 100 293 3 9))
                 302
-    "(update-ball-y (make-ball 100 293 3 9))
+                "(update-ball-y (make-ball 100 293 3 9))
           should return: 302")
   (check-equal? (update-ball-y (make-ball 20 5 3 -9))
                 4
-    "(update-ball-y (make-ball 20 5 3 -9))
+                "(update-ball-y (make-ball 20 5 3 -9))
           should return: 4"))
 
 ;; STRATEGY: Cases on if ball hits walls along the y-axis.
@@ -582,15 +571,15 @@
 (begin-for-test
   (check-equal? (update-ball-vx (make-ball 100 293 3 9))
                 3
-    "(update-ball-vx (make-ball 100 293 3 9))
+                "(update-ball-vx (make-ball 100 293 3 9))
           should return: 3")
   (check-equal? (update-ball-vx (make-ball 423 50 3 9))
                 -3
-    "(update-ball-vx (make-ball 423 50 3 9))
+                "(update-ball-vx (make-ball 423 50 3 9))
           should return: -3")
   (check-equal? (update-ball-vx (make-ball 2 50 -3 9))
                 3
-    "(update-ball-vx (make-ball 2 50 -3 9))
+                "(update-ball-vx (make-ball 2 50 -3 9))
           should return: 3"))
 
 ;; STRATEGY: Cases on if ball hits walls along the x-axis
@@ -616,11 +605,11 @@
 (begin-for-test
   (check-equal? (update-ball-vy (make-ball 100 293 3 -9))
                 -9
-    "(update-ball-y (make-ball 100 293 3 -9))
+                "(update-ball-y (make-ball 100 293 3 -9))
           should return: -9")
   (check-equal? (update-ball-vy (make-ball 20 5 3 -9))
                 9
-    "(update-ball-vy (make-ball 20 5 3 -9))
+                "(update-ball-vy (make-ball 20 5 3 -9))
           should return: 9"))
 
 ;; STRATEGY: Cases on if ball hits the top wall
@@ -648,13 +637,13 @@
   (check-equal? (move-ball (make-ball 100 293 3 9)
                            (make-racket 120 300 0 0 #false 0 0))
                 (make-ball 103 298 3 -9)
-    "(ball-hitting-racket? (make-ball 100 293 3 9)
+                "(ball-hitting-racket? (make-ball 100 293 3 9)
                            (make-racket 120 300 0 0 #false 0 0))
           should return: (make-ball 103 298 3 -9)")
   (check-equal? (move-ball (make-ball 150 350 3 -9)
                            (make-racket 20 645 3 9 #false 0 0))
                 (make-ball 153 341 3 -9)
-    "(ball-hitting-racket? (make-ball 100 293 3 9)
+                "(ball-hitting-racket? (make-ball 100 293 3 9)
                            (make-racket 120 300 0 0 #false 0 0))
           should return: (make-ball 153 341 3 -9)"))
 
@@ -688,14 +677,20 @@
 
 ;; STRATEGY: Use Observer Template for BallList
 ;;              on blist.
+;(define (move-balls blist racket)
+;  (cond
+;    [(empty? blist)
+;     empty]
+;    [else
+;     (list* (move-ball (first blist) racket)
+;            (move-balls (rest blist) racket))]))
 (define (move-balls blist racket)
-  (cond
-    [(empty? blist)
-     empty]
-    [else
-     (list* (move-ball (first blist) racket)
-            (move-balls (rest blist) racket))]))
-
+  (map
+   ;; Ball -> Ball
+   ;; GIVEN:   a ball
+   ;; RETURNS: the same ball in the next tick.
+   (lambda (b) (move-ball b racket))
+   blist))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS MANIPULATING STATES OF THE RACKET:
@@ -716,7 +711,7 @@
 (begin-for-test
   (check-equal? (racket-hitting-left-wall? (make-racket 25 40 -3 1 #false 0 0))
                 #true
-     "(racket-hitting-left-wall? (make-racket 25 40 -3 1 #false 0 0))
+                "(racket-hitting-left-wall? (make-racket 25 40 -3 1 #false 0 0))
             should return: true"))
 
 ;; STRATEGY: Use Observer Template for Racket
@@ -742,7 +737,7 @@
 (begin-for-test
   (check-equal? (racket-hitting-right-wall? (make-racket 400 40 3 1 #false 0 0))
                 #true
-     "(racket-hitting-right-wall? (make-racket 400 40 3 1 #false 0 0))
+                "(racket-hitting-right-wall? (make-racket 400 40 3 1 #false 0 0))
             should return: true"))
 
 ;; STRATEGY: Use Observer Template for Racket
@@ -768,7 +763,7 @@
 (begin-for-test
   (check-equal? (racket-hitting-top-wall? (make-racket 65 40 3 1 #false 0 0))
                 #false
-     "(racket-hitting-top-wall? (make-racket 65 40 3 1 #false 0 0))
+                "(racket-hitting-top-wall? (make-racket 65 40 3 1 #false 0 0))
             should return: false"))
 
 ;; STRATEGY: Use Observer Template for Racket
@@ -791,7 +786,7 @@
 (begin-for-test
   (check-equal? (racket-hitting-bottom-wall? (make-racket 120 647 0 5 #false 0 0))
                 #true
-     "(racket-hitting-bottom-wall? (make-racket 120 647 0 5 #false 0 0))
+                "(racket-hitting-bottom-wall? (make-racket 120 647 0 5 #false 0 0))
             should return: true"))
 
 ;; STRATEGY: Use Observer Template for Racket
@@ -819,7 +814,7 @@
   (check-equal? (racket-hitting-any-balls?
                  empty (make-racket 120 647 0 5 #false 0 0))
                 #false
-     "(racket-hitting-any-balls?
+                "(racket-hitting-any-balls?
          empty (make-racket 120 647 0 5 #false 0 0))
             should return: #false")
   (check-equal? (racket-hitting-any-balls?
@@ -827,20 +822,20 @@
                        (make-ball 50 293 3 9))
                  (make-racket 120 300 0 0 #false 0 0))
                 #true
-     "(racket-hitting-any-balls?
+                "(racket-hitting-any-balls?
          BallList with one ball hitting the racket
         (make-racket 120 647 0 5 #false 0 0))
             should return: #true"))
 
-;; STRATEGY: Use Observer Template for BallList
-;;              on blist.
+;; STRATEGY: Use HOF ormap on blist.
 (define (racket-hitting-any-balls? blist racket)
-  (cond
-    [(empty? blist)
-     #false]
-    [else
-     (or (ball-hitting-racket? (first blist) racket)
-         (racket-hitting-any-balls? (rest blist) racket))]))
+  (ormap
+   ;; Ball -> Boolean
+   ;; GIVEN:   a Ball
+   ;; RETURNS: true iff the ball is colliding with the
+   ;;            racket in the next tick.
+   (lambda (b) (ball-hitting-racket? b racket))
+   blist))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; update-racket-x : Racket -> Integer
@@ -857,24 +852,24 @@
 (begin-for-test
   (check-equal? (update-racket-x (make-racket 25 40 -3 1 #false 0 0))
                 23.5
-      "(update-racket-x (make-racket 25 40 -3 1 #false 0 0))
+                "(update-racket-x (make-racket 25 40 -3 1 #false 0 0))
               should return: 23.5")
   (check-equal? (update-racket-x (make-racket 400 40 3 1 #false 0 0))
                 401.5
-      "(update-racket-x (make-racket 400 40 3 1 #false 0 0))
+                "(update-racket-x (make-racket 400 40 3 1 #false 0 0))
               should return: 401.5")
   (check-equal? (update-racket-x (make-racket 65 40 3 1 #false 0 0))
                 68
-      "(update-racket-x (make-racket 65 40 3 1 #false 0 0))
+                "(update-racket-x (make-racket 65 40 3 1 #false 0 0))
               should return: 68"))
 
 ;; STRATEGY: Cases on if ball hits walls along the x-axis.
 (define (update-racket-x racket)
   (cond
     [(racket-hitting-left-wall? racket)
-         RACKET-MID-LENGTH]
+     RACKET-MID-LENGTH]
     [(racket-hitting-right-wall? racket)
-         (- COURT-X-CORD RACKET-MID-LENGTH)]
+     (- COURT-X-CORD RACKET-MID-LENGTH)]
     [else (+ (racket-x racket) (racket-vx racket))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
@@ -891,18 +886,18 @@
 (begin-for-test
   (check-equal? (update-racket-y (make-racket 120 647 0 5 #false 0 0))
                 649
-      "(update-racket-y (make-racket 120 647 0 5 #false 0 0))
+                "(update-racket-y (make-racket 120 647 0 5 #false 0 0))
               should return: 649")
   (check-equal? (update-racket-y (make-racket 65 40 3 1 #false 0 0))
                 41
-      "(update-racket-y (make-racket 65 40 3 1 #false 0 0))
+                "(update-racket-y (make-racket 65 40 3 1 #false 0 0))
               should return: 41"))
 
 ;; STRATEGY: Cases on if ball hits walls along the y-axis.
 (define (update-racket-y racket)
   (cond
     [(racket-hitting-bottom-wall? racket)
-         COURT-Y-CORD]
+     COURT-Y-CORD]
     [else (+ (racket-y racket) (racket-vy racket))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
@@ -922,17 +917,17 @@
   (check-equal? (update-racket-vx
                  (make-racket 330 384 0 0 #false 0 0) LEFT-ARROW-KEY)
                 -1
-    "(update-racket-vx (make-racket 330 384 0 0 #false 0 0) LEFT-ARROW-KEY)
+                "(update-racket-vx (make-racket 330 384 0 0 #false 0 0) LEFT-ARROW-KEY)
         should return: -1")
   (check-equal? (update-racket-vx
                  (make-racket 330 384 2 0 #false 0 0) RIGHT-ARROW-KEY)
                 3
-    "(update-racket-vx (make-racket 330 384 2 0 #false 0 0) RIGHT-ARROW-KEY)
+                "(update-racket-vx (make-racket 330 384 2 0 #false 0 0) RIGHT-ARROW-KEY)
         should return: 3")
   (check-equal? (update-racket-vx
                  (make-racket 330 384 2 0 #false 0 0) ANY-OTHER-KEY)
                 2
-    "(update-racket-vx (make-racket 330 384 2 0 #false 0 0) ANY-OTHER-KEY)
+                "(update-racket-vx (make-racket 330 384 2 0 #false 0 0) ANY-OTHER-KEY)
         should return: 2"))
 
 ;; STRATEGY: Cases on the KeyEvent passed.
@@ -958,17 +953,17 @@
   (check-equal? (update-racket-vy
                  (make-racket 330 384 0 0 #false 0 0) UP-ARROW-KEY)
                 -1
-    "(update-racket-vy (make-racket 330 384 0 0 #false 0 0) UP-ARROW-KEY)
+                "(update-racket-vy (make-racket 330 384 0 0 #false 0 0) UP-ARROW-KEY)
         should return: -1")
   (check-equal? (update-racket-vy
                  (make-racket 330 384 2 3 #false 0 0) DOWN-ARROW-KEY)
                 4
-    "(update-racket-vy (make-racket 330 384 2 3 #false 0 0) DOWN-ARROW-KEY)
+                "(update-racket-vy (make-racket 330 384 2 3 #false 0 0) DOWN-ARROW-KEY)
         should return: 4")
   (check-equal? (update-racket-vy
                  (make-racket 330 384 0 2 #false 0 0) ANY-OTHER-KEY)
                 2
-    "(update-racket-vy (make-racket 330 384 0 2 #false 0 0) ANY-OTHER-KEY)
+                "(update-racket-vy (make-racket 330 384 0 2 #false 0 0) ANY-OTHER-KEY)
         should return: 2"))
 
 ;; STRATEGY: Cases on the KeyEvent passed.
@@ -1000,7 +995,7 @@
   (check-equal? (update-racket-speed
                  (make-racket 330 384 2 0 #false 0 0) UP-ARROW-KEY)
                 (make-racket 330 384 2 -1 #false 0 0)
-    "(update-racket-vy (make-racket 330 384 2 0 #false 0 0) UP-ARROW-KEY)
+                "(update-racket-vy (make-racket 330 384 2 0 #false 0 0) UP-ARROW-KEY)
         should return: (make-racket 330 384 2 -1 #false 0 0)"))
 
 ;; STRATEGY: Divide into Simple Functions
@@ -1053,13 +1048,13 @@
   (check-equal? (move-racket (list (make-ball 100 293 3 9))
                              (make-racket 120 300 0 -1 #false 0 0))
                 (make-racket 120 299 0 0 #false 0 0)
-    "(move-racket (make-ball 100 293 3 9)
+                "(move-racket (make-ball 100 293 3 9)
                   (make-racket 120 300 0 -1 #false 0 0))
           should return: (make-racket 120 299 0 0 #false 0 0)")
   (check-equal? (move-racket (list (make-ball 150 350 3 -9))
                              (make-racket 40 645 3 9 #false 0 0))
                 (make-racket 43 649 3 9 #false 0 0)
-    "(move-racket (make-ball 150 350 3 -9 #false))
+                "(move-racket (make-ball 150 350 3 -9 #false))
                   (make-racket 40 645 3 9 #false 0 0))
           should return: (make-racket 43 649 3 9 #false 0 0)"))
 
@@ -1080,12 +1075,12 @@
     [(racket-selected? racket)
      racket]
     [else (make-racket (update-racket-x racket)
-                  (update-racket-y racket)
-                  (racket-vx racket)
-                  (racket-vy racket)
-                  (racket-selected? racket)
-                  (racket-x-distance racket)
-                  (racket-y-distance racket))]))
+                       (update-racket-y racket)
+                       (racket-vx racket)
+                       (racket-vy racket)
+                       (racket-selected? racket)
+                       (racket-x-distance racket)
+                       (racket-y-distance racket))]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1144,7 +1139,7 @@
                             1
                             5
                             (make-select-ball 0 0))
-     "(move-world World in a rally state) should return: world
+                "(move-world World in a rally state) should return: world
            at the next tick with appropriate updates to its fields.")
   (check-equal? (move-world (make-world (list (make-ball 20 645 3 9))
                                         (make-racket 330 384 0 0 #false 0 0)
@@ -1160,7 +1155,7 @@
                             1
                             0
                             (make-select-ball 0 0))
-     "(move-world World with ball hitting bottom wall in next tick)
+                "(move-world World with ball hitting bottom wall in next tick)
             should return: world in paused state."))
 
 ;; STRATEGY: Divide into simple functions
@@ -1239,13 +1234,14 @@
                             (make-racket 330 384 0 0 #false 0 0)
                             #false #true 1 1
                             (make-select-ball 0 0))
-     "(disappear-ball-world WORLD-2BALLS-IN-RALLY-STATE)
+                "(disappear-ball-world WORLD-2BALLS-IN-RALLY-STATE)
            should return: World with 2 ballsin the list in the next tick"))
 
 ;; STRATEGY: Use Constructor Template for World
 ;;               on w
 (define (disappear-ball-world w)
-  (if (empty? (rest (world-balls w)))
+  (if (or (empty? (rest (world-balls w)))
+          (racket-hitting-top-wall? (world-racket w)))
       (pause-world w)
       (make-world (move-balls (disappear-ball (world-balls w))
                               (world-racket w))
@@ -1310,7 +1306,7 @@
                             1
                             2
                             (make-select-ball 0 0))
-     "(restart-world World in paused state for less than 3 seconds)
+                "(restart-world World in paused state for less than 3 seconds)
             should return: world in paused state in next tick.")
   (check-equal? (restart-world (make-world (list (make-ball 20 645 3 9))
                                            (make-racket 330 384 0 0 #false 0 0)
@@ -1326,21 +1322,21 @@
                             1
                             0
                             (make-select-ball 0 0))
-     "(restart-world World in paused state for more than 3 seconds)
+                "(restart-world World in paused state for more than 3 seconds)
             should return: world in ready to serve state."))
 
 ;; STRATEGY: Divide into simple functions
 ;;             and Use Constructor Template for World.
 (define (restart-world w)
   (if (< (* (world-speed w) (world-ticks-passed w)) 3)
-           (make-world (world-balls w)
-                       (world-racket w)
-                       (world-ready-to-serve? w)
-                       (world-in-rally? w)
-                       (world-speed w)
-                       (add1 (world-ticks-passed w))
-                       (world-select w))
-           (initial-world (world-speed w))))
+      (make-world (world-balls w)
+                  (world-racket w)
+                  (world-ready-to-serve? w)
+                  (world-in-rally? w)
+                  (world-speed w)
+                  (add1 (world-ticks-passed w))
+                  (world-select w))
+      (initial-world (world-speed w))))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; world-after-tick : World -> World
@@ -1361,14 +1357,14 @@
                             (make-racket 330 384 0 0 #false 0 0)
                             #false #true 1 1
                             (make-select-ball 0 0))
-     "(world-after-tick WORLD-AFTER-SPACE-KEY)
+                "(world-after-tick WORLD-AFTER-SPACE-KEY)
           should return: World in rally state in the next tick")
   (check-equal? (world-after-tick WORLD-IN-PAUSE-STATE)
                 (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 0 0 #false 0 0)
                             #false #false 1 1
                             (make-select-ball 0 0))
-     "(world-after-tick WORLD-IN-PAUSE-STATE)
+                "(world-after-tick WORLD-IN-PAUSE-STATE)
           should return: World in pause state in the next tick"))
 
 ;; STRATEGY: Combine Simple Functions
@@ -1471,7 +1467,7 @@
 ;; Example For Testing
 (define WORLD-IN-SELECTED-STATE (make-world (list (make-ball 330 384 3 -9))
                                             (make-racket 330 384 0 0
-                                                       #true 320 414)
+                                                         #true 320 414)
                                             #false
                                             #true
                                             1
@@ -1479,32 +1475,32 @@
                                             (make-select-ball 320 414)))
 (define WORLD-IN-PAUSE-STATE (make-world (list (make-ball 330 384 3 -9))
                                          (make-racket 330 384 0 0
-                                                       #false 0 0)
-                                          #false
-                                          #false
-                                          1
-                                          0
-                                          (make-select-ball 0 0)))
+                                                      #false 0 0)
+                                         #false
+                                         #false
+                                         1
+                                         0
+                                         (make-select-ball 0 0)))
 (begin-for-test
   (check-equal? (world-to-scene WORLD-AFTER-SPACE-KEY)
                 (place-image BALL SERVE-X-CORD SERVE-Y-CORD
-                    (place-image RACKET SERVE-X-CORD SERVE-Y-CORD
-                                        EMPTY-SCENE))
-     "(world-to-scene WORLD-AFTER-SPACE-KEY)
+                             (place-image RACKET SERVE-X-CORD SERVE-Y-CORD
+                                          EMPTY-SCENE))
+                "(world-to-scene WORLD-AFTER-SPACE-KEY)
            should return: scene in rally state")
   (check-equal? (world-to-scene WORLD-IN-PAUSE-STATE)
                 (place-image BALL SERVE-X-CORD SERVE-Y-CORD
-                    (place-image RACKET SERVE-X-CORD SERVE-Y-CORD
-                                        PAUSED-EMPTY-SCENE))
-     "(world-to-scene WORLD-IN-PAUSE-STATE)
+                             (place-image RACKET SERVE-X-CORD SERVE-Y-CORD
+                                          PAUSED-EMPTY-SCENE))
+                "(world-to-scene WORLD-IN-PAUSE-STATE)
            should return: scene in paused state")
   (check-equal? (world-to-scene WORLD-IN-SELECTED-STATE)
                 (place-image BALL SERVE-X-CORD SERVE-Y-CORD
-                  (place-image SELECT-BALL 320 414
-                    (place-image RACKET
-                         SERVE-X-CORD SERVE-Y-CORD
-                         EMPTY-SCENE)))
-     "(world-to-scene WORLD-IN-SELECTED-STATE)
+                             (place-image SELECT-BALL 320 414
+                                          (place-image RACKET
+                                                       SERVE-X-CORD SERVE-Y-CORD
+                                                       EMPTY-SCENE)))
+                "(world-to-scene WORLD-IN-SELECTED-STATE)
            should return: scene in selected state"))
 
 ;; STRATEGY: Use Simple Functions
@@ -1530,7 +1526,7 @@
 (begin-for-test
   (check-equal? (is-space-key-event? SPACE-KEY)
                 #true
-     "(is-space-key-event? SPACE-KEY)
+                "(is-space-key-event? SPACE-KEY)
           should return: true"))
 
 ;; STRATEGY: Check if given key event string
@@ -1551,7 +1547,7 @@
 (begin-for-test
   (check-equal? (is-b-key-event? B-KEY)
                 #true
-     "(is-b-key-event? B-KEY)
+                "(is-b-key-event? B-KEY)
           should return: true"))
 
 ;; STRATEGY: Check if given key event string
@@ -1572,7 +1568,7 @@
 (begin-for-test
   (check-equal? (is-left-arrow-key-event? LEFT-ARROW-KEY)
                 #true
-     "(is-left-arrow-key-event? LEFT-ARROW-KEY)
+                "(is-left-arrow-key-event? LEFT-ARROW-KEY)
           should return: true"))
 
 ;; STRATEGY: Check if given key event string
@@ -1593,7 +1589,7 @@
 (begin-for-test
   (check-equal? (is-right-arrow-key-event? RIGHT-ARROW-KEY)
                 #true
-     "(is-right-arrow-key-event? RIGHT-ARROW-KEY)
+                "(is-right-arrow-key-event? RIGHT-ARROW-KEY)
           should return: true"))
 
 ;; STRATEGY: Check if given key event string
@@ -1614,7 +1610,7 @@
 (begin-for-test
   (check-equal? (is-down-arrow-key-event? DOWN-ARROW-KEY)
                 #true
-     "(is-down-arrow-key-event? DOWN-ARROW-KEY)
+                "(is-down-arrow-key-event? DOWN-ARROW-KEY)
           should return: true"))
 
 ;; STRATEGY: Check if given key event string
@@ -1635,7 +1631,7 @@
 (begin-for-test
   (check-equal? (is-up-arrow-key-event? UP-ARROW-KEY)
                 #true
-     "(is-up-arrow-key-event? UP-ARROW-KEY)
+                "(is-up-arrow-key-event? UP-ARROW-KEY)
           should return: true"))
 
 ;; STRATEGY: Check if given key event string
@@ -1672,11 +1668,11 @@
 (begin-for-test
   (check-equal? (world-with-space-toggled WORLD-AFTER-SPACE-KEY)
                 WORLD-IN-PAUSE-STATE
-     "(world-with-space-toggled WORLD-AFTER-SPACE-KEY)
+                "(world-with-space-toggled WORLD-AFTER-SPACE-KEY)
             should return: WORLD-IN-PAUSE-STATE")
   (check-equal? (world-with-space-toggled WORLD-IN-PAUSE-STATE)
                 WORLD-IN-PAUSE-STATE
-     "(world-with-space-toggled WORLD-IN-PAUSE-STATE)
+                "(world-with-space-toggled WORLD-IN-PAUSE-STATE)
             should return: WORLD-IN-PAUSE-STATE"))
 
 ;; STRATEGY: Cases on state of the world.
@@ -1693,8 +1689,8 @@
                  (world-speed w)
                  (world-ticks-passed w)
                  (world-select w))]
-   [(world-in-rally? w) (pause-world w)]
-   [else w]))
+    [(world-in-rally? w) (pause-world w)]
+    [else w]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; world-with-b-toggled : World -> World
@@ -1718,7 +1714,7 @@
                  (world-speed w)
                  (world-ticks-passed w)
                  (world-select w))]
-   [else w]))
+    [else w]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; world-with-arrow-toggled : World KeyEvent -> World
@@ -1741,7 +1737,7 @@
   (check-equal? (world-with-arrow-toggled (initial-world 1)
                                           ANY-OTHER-KEY)
                 (initial-world 1)
-      "(world-with-arrow-toggled (initial-world 1))
+                "(world-with-arrow-toggled (initial-world 1))
            should return: (initial-world 1)")
   (check-equal? (world-with-arrow-toggled
                  WORLD-AFTER-SPACE-KEY
@@ -1753,7 +1749,7 @@
                             1
                             0
                             (make-select-ball 0 0))
-      "(world-with-arrow-toggled (initial-world 1))
+                "(world-with-arrow-toggled (initial-world 1))
            should return: (initial-world 1)"))
 
 ;; STRATEGY: Cases on the serve state of the world.
@@ -1788,7 +1784,7 @@
 (begin-for-test
   (check-equal? (world-after-key-event (initial-world 1) SPACE-KEY)
                 WORLD-AFTER-SPACE-KEY
-    "(world-after-key-event
+                "(world-after-key-event
             (World in initial ready to serve state SPACE-KEY)
                 should return World in rally state")
   (check-equal? (world-after-key-event
@@ -1801,7 +1797,7 @@
                             1
                             0
                             (make-select-ball 0 0))
-    "(world-after-key-event
+                "(world-after-key-event
           (World in initial ready to serve state LEFT-ARROW-KEY)
                should return World with decreased vx of racket")
   (check-equal? (world-after-key-event
@@ -1814,7 +1810,7 @@
                             1
                             0
                             (make-select-ball 0 0))
-    "(world-after-key-event
+                "(world-after-key-event
           (World in initial ready to serve state RIGHT-ARROW-KEY)
                should return World with increased vx of racket")
   (check-equal? (world-after-key-event
@@ -1827,7 +1823,7 @@
                             1
                             0
                             (make-select-ball 0 0))
-    "(world-after-key-event
+                "(world-after-key-event
           (World in initial ready to serve state DOWN-ARROW-KEY)
                should return World with increased vx of racket")
   (check-equal? (world-after-key-event
@@ -1840,7 +1836,7 @@
                             1
                             0
                             (make-select-ball 0 0))
-    "(world-after-key-event
+                "(world-after-key-event
           (World in initial ready to serve state UP-ARROW-KEY)
                should return World with decreased vy of racket")
   (check-equal? (world-after-key-event
@@ -1853,12 +1849,12 @@
                              1
                              0
                              (make-select-ball 0 0))
-    "(world-after-key-event
+                "(world-after-key-event
           (World in initial ready to serve state ANY-OTHER-KEY)
                should return World with decreased vy of racket")
   (check-equal? (world-after-key-event (initial-world 1) B-KEY)
                 (initial-world 1)
-    "(world-after-key-event
+                "(world-after-key-event
             (World in initial ready to serve state B-KEY)
                 should return the same world")
   (check-equal? (world-after-key-event WORLD-AFTER-SPACE-KEY B-KEY)
@@ -1867,7 +1863,7 @@
                             (make-racket 330 384 0 0 #false 0 0)
                             #false #true 1 0
                             (make-select-ball 0 0))
-    "(world-after-key-event (WORLD-AFTER-SPACE-KEY B-KEY)
+                "(world-after-key-event (WORLD-AFTER-SPACE-KEY B-KEY)
          should return world with two balls in BallList"))
 
 ;; STRATEGY: Cases on KeyEvent.
@@ -1928,7 +1924,7 @@
   (mouse=? mev MOUSE-BUTTON-UP))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
-;; racket-after-mouse-event : Racket Int Int MouseEvent -> Racket
+;; racket-after-mouse-event : Racket Integer Integer MouseEvent -> Racket
 ;; GIVEN:   a racket, the x and y coordinates of a mouse event,
 ;;            and the mouse event
 ;; RETURNS: the racket as it should be after the given mouse event.
@@ -1936,17 +1932,17 @@
 ;; TESTS:
 (begin-for-test
   (check-equal? (racket-after-mouse-event
-                    (make-racket 330 384 0 0 #true 320 394)
-                    310 414 MOUSE-DRAG)
+                 (make-racket 330 384 0 0 #true 320 394)
+                 310 414 MOUSE-DRAG)
                 (make-racket -10 20 0 0 #false 320 394)
-     "When (racket-after-mouse-event is given a selected racket
+                "When (racket-after-mouse-event is given a selected racket
           and drag mouse event) should return: racket at new
               location relative to selection point")
   (check-equal? (racket-after-mouse-event
-                    (make-racket 330 384 0 0 #false 0 0)
-                    310 414 ANY-OTHER-MOUSE)
+                 (make-racket 330 384 0 0 #false 0 0)
+                 310 414 ANY-OTHER-MOUSE)
                 (make-racket 330 384 0 0 #false 0 0)
-     "When (racket-after-mouse-event is given a selected racket)
+                "When (racket-after-mouse-event is given a selected racket)
           should return: same racket"))
 
 ;; STRATEGY: Cases on mouse event.
@@ -2012,7 +2008,7 @@
   (check-equal? (world-after-drag
                  WORLD-IN-PAUSE-STATE 200 200 MOUSE-DRAG)
                 WORLD-IN-PAUSE-STATE
-    "(world-after-drag WORLD-IN-PAUSE-STATE 200 200 MOUSE-DRAG)
+                "(world-after-drag WORLD-IN-PAUSE-STATE 200 200 MOUSE-DRAG)
               should return: WORLD-IN-PAUSE-STATE"))
 
 ;; STRATEGY: Cases on whether the racket is selected
@@ -2055,7 +2051,7 @@
                             (make-racket 330 384 0 0 #true 10 10)
                             #false #true 1 0
                             (make-select-ball 340 394))
-    "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
+                "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
            340 394 MOUSE-BUTTON-DOWN) should return: world with
                racket selected")
   (check-equal? (world-after-mouse-event (initial-world 1)
@@ -2063,31 +2059,31 @@
                 (make-world (list (make-ball 330 384 0 0))
                             (make-racket 330 384 0 0 #false 0 0)
                             #true #false 1 0 (make-select-ball 0 0))
-    "(world-after-mouse-event (initial-world 1)
+                "(world-after-mouse-event (initial-world 1)
            340 394 MOUSE-BUTTON-DOWN) should return: the same world")
   (check-equal? (world-after-mouse-event WORLD-AFTER-SPACE-KEY
                                          340 394 MOUSE-BUTTON-UP)
                 (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 0 0 #false 0 0)
                             #false #true 1 0 (make-select-ball 340 394))
-    "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
+                "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
            340 394 MOUSE-BUTTON-DOWN) should return: the world
                  after racket selection is over")
   (check-equal? (world-after-mouse-event WORLD-AFTER-SPACE-KEY
                                          340 394 ANY-OTHER-MOUSE)
                 WORLD-AFTER-SPACE-KEY
-    "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
+                "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
            340 394 MOUSE-BUTTON-DOWN) should return: the same world")
   (check-equal? (world-after-mouse-event
-                  (world-after-tick
-                   (world-after-mouse-event
-                    WORLD-AFTER-SPACE-KEY 330 384 MOUSE-BUTTON-DOWN))
-                  200 200 MOUSE-DRAG)
+                 (world-after-tick
+                  (world-after-mouse-event
+                   WORLD-AFTER-SPACE-KEY 330 384 MOUSE-BUTTON-DOWN))
+                 200 200 MOUSE-DRAG)
                 (make-world (list (make-ball 333 375 3 -9))
                             (make-racket 200 200 0 0 #false 0 0)
                             #false #true 1 1
                             (make-select-ball 200 200))
-    "Racket dragged to 200 200 on WORLD-AFTER-SPACE-KEY
+                "Racket dragged to 200 200 on WORLD-AFTER-SPACE-KEY
         should return: world with same world with racket at 200 200"))
 
 ;; STRATEGY: Cases on MouseEvent

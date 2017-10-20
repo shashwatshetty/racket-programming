@@ -5,14 +5,14 @@
 (require "extras.rkt")
 (require 2htdp/image)
 (require 2htdp/universe)
-(check-location "03" "q2.rkt")
+(check-location "04" "q2.rkt")
 
 (provide simulation
          initial-world
          world-ready-to-serve?
          world-after-tick
          world-after-key-event
-         world-ball
+         world-balls
          world-racket
          ball-x
          ball-y
@@ -26,7 +26,7 @@
          racket-after-mouse-event
          racket-selected?)
 
-;; SquashPractise2
+;; SquashPractise3
 ;; Simulates squash practise. Simulation starts when the space button
 ;; is pressed. Simulation contains a squash racket and a squash ball as
 ;; objects interacting with each other and the simulation environment.
@@ -70,9 +70,9 @@
 ;; (make-ball x y vx vy)
 ;;  with the following fields:
 ;; INTERP:
-;;    x  : PosReal is the x-co-ordinate of the
+;;    x  : Integer is the x-co-ordinate of the
 ;;            pixel at the center of the ball.
-;;    y  : PosReal is the y-co-ordinate of the
+;;    y  : Integer is the y-co-ordinate of the
 ;;            pixel at the center of the ball.
 ;;    vx : Real is the x-component of the velocity
 ;;            of the ball measured as pixel per tick.
@@ -152,32 +152,50 @@
 ;;    (... (select-ball-x select)
 ;;         (select-ball-y select))
 
+;; A sequence of Balls (BallList) is represented as a list of Balls.
+
+;; CONSTRUCTOR TEMPLATES:
+;; empty                 -- the empty sequence
+;; (cons ball bseq)
+;;   WHERE:
+;;    ball :    Ball     is the first Ball in the sequence
+;;    bseq :    BallList is the the rest of the sequence
+
+;; OBSERVER TEMPLATE:
+;; blist-fn : BallList -> ??
+#;
+(define (blist-fn bs)
+  (cond
+    [(empty? bs) ...]
+    [else (... (first bs)
+               (blist-fn (rest bs)))]))
+
 ;; A World is represented as a struct
 ;; (make-world ball racket ready-to-serve? in-rally? speed ticks-passed select)
 ;;  with the following fields:
-;;     ball            : Ball       is the ball in the world.
-;;     racket          : Racket     is the racket in the world.
-;;     ready-to-serve? : Boolean    represents if the world is in a
-;;                                   ready to serve state.
-;;     in-rally?       : Boolean    represents if the world is in a
-;;                                   rally state.
-;;     speed           : NonNegReal is the speed of the simulation
-;;                                   given by the user.
-;;     ticks-passed    : PosInt     is the number of ticks that have passed
-;;                                   in a non-paused or paused state.
-;;     select          : SelectBall is the ball displayed when
-;;                                   racket in the world is selected.
+;;     balls           : BallList    is the ball in the world.
+;;     racket          : Racket      is the racket in the world.
+;;     ready-to-serve? : Boolean     represents if the world is in a
+;;                                    ready to serve state.
+;;     in-rally?       : Boolean     represents if the world is in a
+;;                                    rally state.
+;;     speed           : NonNegReal  is the speed of the simulation
+;;                                    given by the user.
+;;     ticks-passed    : PosInt      is the number of ticks that have passed
+;;                                    in a non-paused or paused state.
+;;     select          : SelectBall  is the ball displayed when
+;;                                    racket in the world is selected.
 
 ;; IMPLEMENTATION:
 (define-struct world
-  (ball racket ready-to-serve? in-rally? speed ticks-passed select))
+  (balls racket ready-to-serve? in-rally? speed ticks-passed select))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-world Ball Racket Boolean Boolean NonNegReal PosInt SelectBall)
+;; (make-world BallList Racket Boolean Boolean NonNegReal PosInt SelectBall)
 
 ;; OBSERVER TEMPLATE:
 ;; world-fn: World -> ?
-;; (define (world-ball world)
+;; (define (world-balls world)
 ;;    (... (world-racket world)
 ;;         (world-ready-to-serve? world)
 ;;         (world-in-rally? world)
@@ -198,7 +216,7 @@
 ;; RETURNS: the ready-to-serve state of the world.
 
 ;; EXAMPLES:
-;; (initial-world 1) => (make-world (make-ball 330 384 0 0)
+;; (initial-world 1) => (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
 ;;                                  (make-racket 330 384 0 0 #false 0 0)
 ;;                                  #true
 ;;                                  #false
@@ -209,8 +227,9 @@
 ;; TESTS:
 (begin-for-test
   (check-equal? (initial-world 1)
-                (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0)
-                            (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
+                (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
+                            (make-racket SERVE-X-CORD SERVE-Y-CORD
+                                         0 0 #false 0 0)
                             #true
                             #false
                             1
@@ -221,7 +240,7 @@
 
 ;; STRATEGY: Use Constructor Template for World.
 (define (initial-world sim-speed)
-  (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0)
+  (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
               (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
               #true
               #false
@@ -235,7 +254,7 @@
 ;; RETURNS: true iff the world is not in its ready-to-serve state.
 
 ;; EXAMPLES:
-;; (update-serve-ready (make-world (make-ball 330 384 0 0)
+;; (update-serve-ready (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
 ;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #true
 ;;                                 #false
@@ -247,7 +266,7 @@
 ;;TESTS:
 (begin-for-test
   (check-equal? (update-serve-ready
-                 (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0)
+                 (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
                              (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
                              #true
                              #false
@@ -269,7 +288,7 @@
 ;; RETURNS: true iff the world is not in a rally state.
 
 ;; EXAMPLES:
-;; (update-in-rally (make-world (make-ball 330 384 0 0)
+;; (update-in-rally (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
 ;;                              (make-racket 330 384 0 0 #false 0 0)
 ;;                              #true
 ;;                              #false
@@ -281,7 +300,7 @@
 ;;TESTS:
 (begin-for-test
   (check-equal? (update-in-rally
-                 (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0)
+                 (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
                              (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
                              #true
                              #false
@@ -394,6 +413,56 @@
 ;;                ball-vy.
 (define (ball-hitting-bottom-wall? ball)
   (>= (+ (ball-y ball) (ball-vy ball)) COURT-Y-CORD))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; any-ball-hitting-bottom-wall? : BallList -> Boolean
+;; GIVEN:   a sequence of balls
+;; RETURNS: true iff any ball in the sequence is colliding with
+;;            the bottom wall in the next tick.
+
+;; EXAMPLES:
+;; (any-ball-hitting-bottom-wall? (make-ball 20 645 3 9))   => #true
+;; (any-ball-hitting-bottom-wall? (make-ball 150 350 3 -9)) => #false
+
+;; STRATEGY: Use Observer Template for BallList
+;;              on blist.
+(define (any-ball-hitting-bottom-wall? blist)
+  (cond
+    [(empty? blist)
+     #false]
+    [else
+     (or (ball-hitting-bottom-wall? (first blist))
+         (any-ball-hitting-bottom-wall? (rest blist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; disappear-ball : BallList -> BallList
+;; GIVEN:   a sequence of balls
+;; RETURNS: true iff any ball in the sequence is colliding with
+;;            the bottom wall in the next tick.
+
+;; EXAMPLES:
+;; (disappear-ball (list (make-ball 20 645 3 9)
+;;                       (make-ball 150 350 3 -9)))
+;;                    => (list (make-ball 150 350 3 -9))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (disappear-ball (list (make-ball 20 645 3 9)
+                                      (make-ball 150 350 3 -9)))
+                (list (make-ball 150 350 3 -9))
+     "(disappear-ball with BallList having one ball colliding
+          with bottom wall should return list with that ball removed"))
+
+;; STRATEGY: Use Observer Template for BallList
+;;              on blist.
+(define (disappear-ball blist)
+  (cond
+    [(empty? blist)
+     empty]
+    [(ball-hitting-bottom-wall? (first blist))
+     (disappear-ball (rest blist))]
+    [else
+     (list* (first blist) (disappear-ball (rest blist)))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; ball-hitting-racket? : Ball Racket -> Boolean
@@ -603,6 +672,30 @@
                  (update-ball-vx ball)
                  (update-ball-vy ball))))
 
+;; CONTRACT & PURPOSE STATEMENTS:
+;; move-balls : BallList Racket -> BallList
+;; GIVEN:   a sequence of balls and racket
+;; RETURNS: the same sequence of balls in the next tick.
+
+;; EXAMPLES:
+;; (move-balls (list (make-ball 100 293 3 9))
+;;             (make-racket 120 300 0 0 #false 0 0))
+;;                           => (list (make-ball 103 298 3 -9))
+;; (move-balls (list (make-ball 150 350 3 -9) (make-ball 100 293 3 9))
+;;             (make-racket 20 645 3 9 #false 0 0))
+;;                           => (list (make-ball 153 341 3 -9)
+;;                                    (make-ball 103 298 3 -9))
+
+;; STRATEGY: Use Observer Template for BallList
+;;              on blist.
+(define (move-balls blist racket)
+  (cond
+    [(empty? blist)
+     empty]
+    [else
+     (list* (move-ball (first blist) racket)
+            (move-balls (rest blist) racket))]))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS MANIPULATING STATES OF THE RACKET:
@@ -706,6 +799,48 @@
 ;;                racket-vy.
 (define (racket-hitting-bottom-wall? racket)
   (>= (+ (racket-y racket) (racket-vy racket)) COURT-Y-CORD))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; racket-hitting-any-balls? : BallList Racket -> Boolean
+;; GIVEN:   a sequence of balls and a racket
+;; RETURNS: true iff the racket is colliding with any
+;;            of the balls in the sequence in the next tick.
+
+;; EXAMPLES:
+;; (racket-hitting-any-balls? empty
+;;                           (make-racket 120 647 0 5 #false 0 0))
+;;                                           =>  #false
+;; (racket-hitting-any-balls? (list (make-ball 100 293 3 9))
+;;                           (make-racket 120 300 0 0 #false 0 0))
+;;                                           =>  #true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (racket-hitting-any-balls?
+                 empty (make-racket 120 647 0 5 #false 0 0))
+                #false
+     "(racket-hitting-any-balls?
+         empty (make-racket 120 647 0 5 #false 0 0))
+            should return: #false")
+  (check-equal? (racket-hitting-any-balls?
+                 (list (make-ball 100 293 3 9)
+                       (make-ball 50 293 3 9))
+                 (make-racket 120 300 0 0 #false 0 0))
+                #true
+     "(racket-hitting-any-balls?
+         BallList with one ball hitting the racket
+        (make-racket 120 647 0 5 #false 0 0))
+            should return: #true"))
+
+;; STRATEGY: Use Observer Template for BallList
+;;              on blist.
+(define (racket-hitting-any-balls? blist racket)
+  (cond
+    [(empty? blist)
+     #false]
+    [else
+     (or (ball-hitting-racket? (first blist) racket)
+         (racket-hitting-any-balls? (rest blist) racket))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; update-racket-x : Racket -> PosReal
@@ -885,7 +1020,8 @@
 ;;            and the mouse event
 ;; RETURNS: the updated value of if the racket is selected.
 
-;; STRATEGY:
+;; STRATEGY: Check if mouse pointer lies within
+;;             racket selection region
 (define (update-racket-selected racket mx my)
   (and (<= (- (+ (racket-x racket) (racket-vx racket))
               RACKET-MID-LENGTH)
@@ -914,24 +1050,25 @@
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (move-racket (make-ball 100 293 3 9)
+  (check-equal? (move-racket (list (make-ball 100 293 3 9))
                              (make-racket 120 300 0 -1 #false 0 0))
                 (make-racket 120 299 0 0 #false 0 0)
     "(move-racket (make-ball 100 293 3 9)
                   (make-racket 120 300 0 -1 #false 0 0))
           should return: (make-racket 120 299 0 0 #false 0 0)")
-  (check-equal? (move-racket (make-ball 150 350 3 -9)
+  (check-equal? (move-racket (list (make-ball 150 350 3 -9))
                              (make-racket 40 645 3 9 #false 0 0))
                 (make-racket 43 649 3 9 #false 0 0)
     "(move-racket (make-ball 150 350 3 -9 #false))
                   (make-racket 40 645 3 9 #false 0 0))
           should return: (make-racket 43 649 3 9 #false 0 0)"))
 
+
 ;; STRATEGY: Cases on if ball hits the racket
 ;;             and Use Constructor Template for Racket.
-(define (move-racket ball racket)
+(define (move-racket blist racket)
   (cond
-    [(and (ball-hitting-racket? ball racket)
+    [(and (racket-hitting-any-balls? blist racket)
           (< (racket-vy racket) 0))
      (make-racket (update-racket-x racket)
                   (update-racket-y racket)
@@ -962,28 +1099,28 @@
 ;; RETURNS: the same world in the next tick.
 
 ;; EXAMPLES:
-;; (move-world (make-world (make-ball 330 384 3 -9)
+;; (move-world (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
 ;;                         (make-racket 330 384 0 0 #false 0 0)
 ;;                         #false
 ;;                         #true
 ;;                         1
 ;;                         4
 ;;                         (make-select-ball 0 0))
-;;                  => (make-world (make-ball 333 375 3 -9)
+;;                  => (make-world (list (make-ball 333 375 3 -9))
 ;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #false
 ;;                                 #true
 ;;                                 1
 ;;                                 5
 ;;                                 (make-select-ball 0 0))
-;; (move-world (make-world (make-ball 20 645 3 9))
+;; (move-world (make-world (list (make-ball 20 645 3 9))
 ;;                         (make-racket 330 384 0 0 #false 0 0)
 ;;                         #false
 ;;                         #true
 ;;                         1
 ;;                         4
 ;;                         (make-select-ball 0 0))
-;;                  => (make-world (make-ball 20 645 3 9))
+;;                  => (make-world (list (make-ball 20 645 3 9)))
 ;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #false
 ;;                                 #false
@@ -993,14 +1130,14 @@
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (move-world (make-world (make-ball 330 384 3 -9)
+  (check-equal? (move-world (make-world (list (make-ball 330 384 3 -9))
                                         (make-racket 330 384 0 0 #false 0 0)
                                         #false
                                         #true
                                         1
                                         4
                                         (make-select-ball 0 0)))
-                (make-world (make-ball 333 375 3 -9)
+                (make-world (list (make-ball 333 375 3 -9))
                             (make-racket 330 384 0 0 #false 0 0)
                             #false
                             #true
@@ -1009,14 +1146,14 @@
                             (make-select-ball 0 0))
      "(move-world World in a rally state) should return: world
            at the next tick with appropriate updates to its fields.")
-  (check-equal? (move-world (make-world (make-ball 20 645 3 9)
+  (check-equal? (move-world (make-world (list (make-ball 20 645 3 9))
                                         (make-racket 330 384 0 0 #false 0 0)
                                         #false
                                         #true
                                         1
                                         4
                                         (make-select-ball 0 0)))
-                (make-world (make-ball 20 645 3 9)
+                (make-world empty
                             (make-racket 330 384 0 0 #false 0 0)
                             #false
                             #false
@@ -1029,11 +1166,11 @@
 ;; STRATEGY: Divide into simple functions
 ;;             and Use Constructor Template for World.
 (define (move-world w)
-  (if (or (ball-hitting-bottom-wall? (world-ball w))
-         (racket-hitting-top-wall? (world-racket w)))
-      (pause-world w)
-      (make-world (move-ball (world-ball w) (world-racket w))
-                  (move-racket (world-ball w) (world-racket w))
+  (if (or (any-ball-hitting-bottom-wall? (world-balls w))
+          (racket-hitting-top-wall? (world-racket w)))
+      (disappear-ball-world w)
+      (make-world (move-balls (world-balls w) (world-racket w))
+                  (move-racket (world-balls w) (world-racket w))
                   (world-ready-to-serve? w)
                   (world-in-rally? w)
                   (world-speed w)
@@ -1046,14 +1183,14 @@
 ;; RETURNS: the same world in the paused state.
 
 ;; EXAMPLES:
-;; (pause-world (make-world (make-ball 20 645 3 9))
+;; (pause-world (make-world (list (make-ball 20 645 3 9))
 ;;                         (make-racket 330 384 0 0 #false 0 0)
 ;;                         #false
 ;;                         #true
 ;;                         1
 ;;                         4
 ;;                         (make-select-ball 0 0))
-;;                  => (make-world (make-ball 20 645 3 9))
+;;                  => (make-world (list (make-ball 20 645 3 9))
 ;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #false
 ;;                                 #false
@@ -1064,13 +1201,61 @@
 ;; STRATEGY: Divide into simple functions
 ;;             and Use Constructor Template for World.
 (define (pause-world w)
-  (make-world (world-ball w)
+  (make-world (disappear-ball (world-balls w))
               (world-racket w)
               (world-ready-to-serve? w)
               (update-in-rally w)
               (world-speed w)
               0
               (world-select w)))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; disappear-ball-world : World -> World
+;; GIVEN:   a world
+;; RETURNS: the same world after the paused state.
+;;             Same world withing the first 3 seconds of paused state.
+;;             World in ready to serve state after 3 seconds pause.
+
+;; EXAMPLES:
+;; (disappear-ball-world WORLD-3BALLS-IN-RALLY-STATE)
+;;                       =>  
+
+;; TESTS:
+(define WORLD-3BALLS-IN-RALLY-STATE (make-world
+                                     (list (make-ball 20 645 3 9)
+                                           (make-ball 333 375 3 -9)
+                                           (make-ball 330 384 3 -9))
+                                     (make-racket 330 384 0 0
+                                                  #false 0 0)
+                                     #false
+                                     #true
+                                     1
+                                     0
+                                     (make-select-ball 0 0)))
+(begin-for-test
+  (check-equal? (disappear-ball-world WORLD-3BALLS-IN-RALLY-STATE)
+                (make-world (list (make-ball 336 366 3 -9)
+                                  (make-ball 333 375 3 -9))
+                            (make-racket 330 384 0 0 #false 0 0)
+                            #false #true 1 1
+                            (make-select-ball 0 0))
+     "(disappear-ball-world WORLD-2BALLS-IN-RALLY-STATE)
+           should return: World with 2 ballsin the list in the next tick"))
+
+;; STRATEGY: Use Constructor Template for World
+;;               on w
+(define (disappear-ball-world w)
+  (if (empty? (rest (world-balls w)))
+      (pause-world w)
+      (make-world (move-balls (disappear-ball (world-balls w))
+                              (world-racket w))
+                  (move-racket (world-balls w) (world-racket w))
+                  (world-ready-to-serve? w)
+                  (world-in-rally? w)
+                  (world-speed w)
+                  (add1 (world-ticks-passed w))
+                  (world-select w))))
+
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; restart-world : World -> World
@@ -1080,28 +1265,28 @@
 ;;             World in ready to serve state after 3 seconds pause.
 
 ;; EXAMPLES:
-;; (restart-world (make-world (make-ball 20 645 3 9)
-;;                         (make-racket 330 384 0 0 #false 0 0)
-;;                         #false
-;;                         #false
-;;                         1
-;;                         1
-;;                         (make-select-ball 0 0))
-;;                  => (make-world (make-ball 20 645 3 9)
+;; (restart-world (make-world (list (make-ball 20 645 3 9))
+;;                            (make-racket 330 384 0 0 #false 0 0)
+;;                            #false
+;;                            #false
+;;                            1
+;;                            1
+;;                            (make-select-ball 0 0))
+;;                  => (make-world (list (make-ball 20 645 3 9))
 ;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #false
 ;;                                 #false
 ;;                                 1
 ;;                                 2
 ;;                                 (make-select-ball 0 0))
-;; (restart-world (make-world (make-ball 20 645 3 9))
-;;                         (make-racket 330 384 0 0 #false 0 0)
-;;                         #false
-;;                         #false
-;;                         1
-;;                         4
-;;                         (make-select-ball 0 0))
-;;                  => (make-world (make-ball 330 384 0 0))
+;; (restart-world (make-world (list (make-ball 20 645 3 9))
+;;                            (make-racket 330 384 0 0 #false 0 0)
+;;                            #false
+;;                            #false
+;;                            1
+;;                            4
+;;                            (make-select-ball 0 0))
+;;                  => (make-world (list (make-ball 330 384 0 0))
 ;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #true
 ;;                                 #false
@@ -1111,14 +1296,14 @@
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (restart-world (make-world (make-ball 20 645 3 9)
+  (check-equal? (restart-world (make-world (list (make-ball 20 645 3 9))
                                            (make-racket 330 384 0 0 #false 0 0)
                                            #false
                                            #false
                                            1
                                            1
                                            (make-select-ball 0 0)))
-                (make-world (make-ball 20 645 3 9)
+                (make-world (list (make-ball 20 645 3 9))
                             (make-racket 330 384 0 0 #false 0 0)
                             #false
                             #false
@@ -1127,14 +1312,14 @@
                             (make-select-ball 0 0))
      "(restart-world World in paused state for less than 3 seconds)
             should return: world in paused state in next tick.")
-  (check-equal? (restart-world (make-world (make-ball 20 645 3 9)
+  (check-equal? (restart-world (make-world (list (make-ball 20 645 3 9))
                                            (make-racket 330 384 0 0 #false 0 0)
                                            #false
                                            #false
                                            1
                                            4
                                            (make-select-ball 0 0)))
-                (make-world (make-ball 330 384 0 0)
+                (make-world (list (make-ball 330 384 0 0))
                             (make-racket 330 384 0 0 #false 0 0)
                             #true
                             #false
@@ -1148,7 +1333,7 @@
 ;;             and Use Constructor Template for World.
 (define (restart-world w)
   (if (< (* (world-speed w) (world-ticks-passed w)) 3)
-           (make-world (world-ball w)
+           (make-world (world-balls w)
                        (world-racket w)
                        (world-ready-to-serve? w)
                        (world-in-rally? w)
@@ -1161,7 +1346,7 @@
 ;; world-after-tick : World -> World
 ;; GIVEN:   any world that's possible for the simulation
 ;; RETURNS: the world that should follow the given world
-;;           after a tick
+;;           after a tick.
 
 ;; EXAMPLES:
 ;; (world-after-tick WORLD-AFTER-SPACE-KEY)
@@ -1172,14 +1357,14 @@
 ;; TESTS:
 (begin-for-test
   (check-equal? (world-after-tick WORLD-AFTER-SPACE-KEY)
-                (make-world (make-ball 333 375 3 -9)
+                (make-world (list (make-ball 333 375 3 -9))
                             (make-racket 330 384 0 0 #false 0 0)
                             #false #true 1 1
                             (make-select-ball 0 0))
      "(world-after-tick WORLD-AFTER-SPACE-KEY)
           should return: World in rally state in the next tick")
   (check-equal? (world-after-tick WORLD-IN-PAUSE-STATE)
-                (make-world (make-ball 330 384 3 -9)
+                (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 0 0 #false 0 0)
                             #false #false 1 1
                             (make-select-ball 0 0))
@@ -1194,7 +1379,7 @@
       (restart-world w)))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
-;; place-seect-ball : World -> Scene
+;; place-select-ball : World -> Scene
 ;; GIVEN:   a world
 ;; RETURNS: a Scene that portrays the given world with the
 ;;            select ball at the position where mouse is clicked.
@@ -1204,16 +1389,72 @@
 ;; STRATEGY: Place the image of the Ball & Racket on an empty canvas
 ;;             depending on if world state is paused or no.
 (define (place-select-ball w)
-  (place-image BALL
-               (ball-x (world-ball w))
-               (ball-y (world-ball w))
-               (place-image SELECT-BALL
-                    (select-ball-x (world-select w))
-                    (select-ball-y (world-select w))
-                    (place-image RACKET
-                         (racket-x (world-racket w))
-                         (racket-y (world-racket w))
-                         EMPTY-SCENE))))
+  (place-image SELECT-BALL
+               (select-ball-x (world-select w))
+               (select-ball-y (world-select w))
+               (place-image RACKET
+                            (racket-x (world-racket w))
+                            (racket-y (world-racket w))
+                            EMPTY-SCENE)))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; place-racket-in-rally : World -> Scene
+;; GIVEN:   a world
+;; RETURNS: a Scene that portrays the given world with the
+;;            racket in the rally/ready to serve state.
+
+;; EXAMPLE:
+;; (place-racket-in-rally WORLD-AFTER-SPACE-KEY)
+;;                         => Places the Racket on empty scene
+
+;; STRATEGY: Place the image of the Racket on an empty canvas.
+(define (place-racket-in-rally w)
+  (place-image RACKET
+               (racket-x (world-racket w))
+               (racket-y (world-racket w))
+               EMPTY-SCENE))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; place-racket-in-pause : World -> Scene
+;; GIVEN:   a world
+;; RETURNS: a Scene that portrays the given world with the
+;;            racket in the paused state.
+
+;; EXAMPLE:
+
+;; STRATEGY: Place the image of the Racket on an empty canvas.
+(define (place-racket-in-pause w)
+  (place-image RACKET
+               (racket-x (world-racket w))
+               (racket-y (world-racket w))
+               PAUSED-EMPTY-SCENE))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; place-balls-to-scene : BallList World -> Scene
+;; GIVEN:   a world
+;; RETURNS: a Scene that portrays the given world with the
+;;            various balls in the given state of the world.
+
+;; EXAMPLE:
+
+;; STRATEGY: Use Observer Template for BallList on blist
+;;             to place the image of the Balls & Racket on
+;;             an empty canvas depending on state of the world.
+(define (place-balls-to-scene blist w)
+  (cond
+    [(empty? blist)
+     (if (or (world-ready-to-serve? w)
+             (world-in-rally? w))
+         (if (racket-selected? (world-racket w))
+             (place-select-ball w)
+             (place-racket-in-rally w))
+         (place-racket-in-pause w))]
+    [else
+     (place-image BALL
+                  (ball-x (first blist))
+                  (ball-y (first blist))
+                  (place-balls-to-scene (rest blist) w))]))
+
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; world-to-scene : World -> Scene
@@ -1228,7 +1469,7 @@
 
 ;; TESTS:
 ;; Example For Testing
-(define WORLD-IN-SELECTED-STATE (make-world (make-ball 330 384 3 -9)
+(define WORLD-IN-SELECTED-STATE (make-world (list (make-ball 330 384 3 -9))
                                             (make-racket 330 384 0 0
                                                        #true 320 414)
                                             #false
@@ -1236,7 +1477,7 @@
                                             1
                                             0
                                             (make-select-ball 320 414)))
-(define WORLD-IN-PAUSE-STATE (make-world (make-ball 330 384 3 -9)
+(define WORLD-IN-PAUSE-STATE (make-world (list (make-ball 330 384 3 -9))
                                          (make-racket 330 384 0 0
                                                        #false 0 0)
                                           #false
@@ -1266,23 +1507,9 @@
      "(world-to-scene WORLD-IN-SELECTED-STATE)
            should return: scene in selected state"))
 
-;; STRATEGY: Place the image of the Ball & Racket on an empty canvas
-;;             depending on if world state is paused or no.
+;; STRATEGY: Use Simple Functions
 (define (world-to-scene w)
-  (if (or (world-ready-to-serve? w)
-          (world-in-rally? w))
-      (if (racket-selected? (world-racket w))
-          (place-select-ball w)
-          (place-image BALL (ball-x (world-ball w))
-                       (ball-y (world-ball w))
-                       (place-image RACKET (racket-x (world-racket w))
-                                           (racket-y (world-racket w))
-                                           EMPTY-SCENE)))
-      (place-image BALL (ball-x (world-ball w))
-                    (ball-y (world-ball w))
-                    (place-image RACKET (racket-x (world-racket w))
-                                        (racket-y (world-racket w))
-                                        PAUSED-EMPTY-SCENE))))
+  (place-balls-to-scene (world-balls w) w))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1310,6 +1537,27 @@
 ;;             matches spacebar key event string.
 (define (is-space-key-event? ke)
   (key=? ke SPACE-KEY))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; is-b-key-event? : KeyEvent -> Boolean
+;; GIVEN:   a KeyEvent
+;; RETURNS: true iff the KeyEvent represents a b key.
+
+;; EXAMPLES:
+(define B-KEY "b")
+;; (is-space-key-event? SPACE-KEY) => #true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (is-b-key-event? B-KEY)
+                #true
+     "(is-b-key-event? B-KEY)
+          should return: true"))
+
+;; STRATEGY: Check if given key event string
+;;             matches spacebar key event string.
+(define (is-b-key-event? ke)
+  (key=? ke B-KEY))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; is-left-arrow-key-event? : KeyEvent -> Boolean
@@ -1414,7 +1662,7 @@
 
 ;; TESTS:
 ;; Example For Testing:
-(define WORLD-AFTER-SPACE-KEY (make-world (make-ball 330 384 3 -9)
+(define WORLD-AFTER-SPACE-KEY (make-world (list (make-ball 330 384 3 -9))
                                           (make-racket 330 384 0 0 #false 0 0)
                                           #false
                                           #true
@@ -1435,7 +1683,7 @@
 (define (world-with-space-toggled w)
   (cond
     [(world-ready-to-serve? w)
-     (make-world (make-ball SERVE-X-CORD SERVE-Y-CORD 3 -9)
+     (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 3 -9))
                  (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0
                               (racket-selected? (world-racket w))
                               (racket-x-distance (world-racket w))
@@ -1446,6 +1694,30 @@
                  (world-ticks-passed w)
                  (world-select w))]
    [(world-in-rally? w) (pause-world w)]
+   [else w]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; world-with-b-toggled : World -> World
+;; GIVEN:   a world
+;; RETURNS: the world that should follow the given world
+;;           after the space key is toggled.
+
+;; EXAMPLES:
+;; (world-with-b-toggled WORLD-AFTER-SPACE-KEY)
+;;                          =>  World having 2 balls
+
+;; STRATEGY: Cases on state of the world.
+(define (world-with-b-toggled w)
+  (cond
+    [(world-in-rally? w)
+     (make-world (list* (make-ball SERVE-X-CORD SERVE-Y-CORD 3 -9)
+                        (world-balls w))
+                 (world-racket w)
+                 (world-ready-to-serve? w)
+                 (world-in-rally? w)
+                 (world-speed w)
+                 (world-ticks-passed w)
+                 (world-select w))]
    [else w]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
@@ -1474,7 +1746,7 @@
   (check-equal? (world-with-arrow-toggled
                  WORLD-AFTER-SPACE-KEY
                  LEFT-ARROW-KEY)
-                (make-world (make-ball 330 384 3 -9)
+                (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 -1 0 #false 0 0)
                             #false
                             #true
@@ -1488,7 +1760,7 @@
 (define (world-with-arrow-toggled w ke)
   (if (world-ready-to-serve? w)
       w
-      (make-world (world-ball w)
+      (make-world (world-balls w)
                   (update-racket-speed (world-racket w) ke)
                   (world-ready-to-serve? w)
                   (world-in-rally? w)
@@ -1504,7 +1776,7 @@
 
 ;; EXAMPLES:
 ;; (world-after-key-event (initial-world 1) SPACE-KEY)
-;;                  =>  (make-world (make-ball 330 384 3 -9)
+;;                  =>  (make-world (list (make-ball 330 384 3 -9))
 ;;                                  (make-racket 330 384 0 0 #false 0 0)
 ;;                                  #false
 ;;                                  #true
@@ -1522,7 +1794,7 @@
   (check-equal? (world-after-key-event
                  WORLD-AFTER-SPACE-KEY
                  LEFT-ARROW-KEY)
-                (make-world (make-ball 330 384 3 -9)
+                (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 -1 0 #false 0 0)
                             #false
                             #true
@@ -1535,7 +1807,7 @@
   (check-equal? (world-after-key-event
                  WORLD-AFTER-SPACE-KEY
                  RIGHT-ARROW-KEY)
-                (make-world (make-ball 330 384 3 -9)
+                (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 1 0 #false 0 0)
                             #false
                             #true
@@ -1548,7 +1820,7 @@
   (check-equal? (world-after-key-event
                  WORLD-AFTER-SPACE-KEY
                  DOWN-ARROW-KEY)
-                (make-world (make-ball 330 384 3 -9)
+                (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 0 1 #false 0 0)
                             #false
                             #true
@@ -1561,7 +1833,7 @@
   (check-equal? (world-after-key-event
                  WORLD-AFTER-SPACE-KEY
                  UP-ARROW-KEY)
-                (make-world (make-ball 330 384 3 -9)
+                (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 0 -1 #false 0 0)
                             #false
                             #true
@@ -1574,7 +1846,7 @@
   (check-equal? (world-after-key-event
                  WORLD-AFTER-SPACE-KEY
                  ANY-OTHER-KEY)
-                (make-world (make-ball 330 384 3 -9)
+                (make-world  (list (make-ball 330 384 3 -9))
                              (make-racket 330 384 0 0 #false 0 0)
                              #false
                              #true
@@ -1583,12 +1855,26 @@
                              (make-select-ball 0 0))
     "(world-after-key-event
           (World in initial ready to serve state ANY-OTHER-KEY)
-               should return World with decreased vy of racket"))
+               should return World with decreased vy of racket")
+  (check-equal? (world-after-key-event (initial-world 1) B-KEY)
+                (initial-world 1)
+    "(world-after-key-event
+            (World in initial ready to serve state B-KEY)
+                should return the same world")
+  (check-equal? (world-after-key-event WORLD-AFTER-SPACE-KEY B-KEY)
+                (make-world (list (make-ball 330 384 3 -9)
+                                  (make-ball 330 384 3 -9))
+                            (make-racket 330 384 0 0 #false 0 0)
+                            #false #true 1 0
+                            (make-select-ball 0 0))
+    "(world-after-key-event (WORLD-AFTER-SPACE-KEY B-KEY)
+         should return world with two balls in BallList"))
 
 ;; STRATEGY: Cases on KeyEvent.
 (define (world-after-key-event w kev)
   (cond
     [(is-space-key-event? kev) (world-with-space-toggled w)]
+    [(is-b-key-event? kev) (world-with-b-toggled w)]
     [(or (is-left-arrow-key-event? kev)
          (is-right-arrow-key-event? kev)
          (is-down-arrow-key-event? kev)
@@ -1663,7 +1949,7 @@
      "When (racket-after-mouse-event is given a selected racket)
           should return: same racket"))
 
-;; STRATEGY:
+;; STRATEGY: Cases on mouse event.
 (define (racket-after-mouse-event racket mx my mev)
   (cond
     [(is-button-down-event? mev)
@@ -1706,7 +1992,7 @@
 (define (world-after-mouse-button w mx my mev)
   (if (and (update-racket-selected (world-racket w) mx my)
            (world-in-rally? w))
-      (make-world (world-ball w)
+      (make-world (world-balls w)
                   (racket-after-mouse-event (world-racket w)
                                             mx my mev)
                   (world-ready-to-serve? w)
@@ -1735,7 +2021,7 @@
 (define (world-after-drag w mx my mev)
   (if (and (racket-selected? (world-racket w))
            (world-in-rally? w))
-      (make-world (world-ball w)
+      (make-world (world-balls w)
                   (racket-after-mouse-event (world-racket w)
                                             mx my mev)
                   (world-ready-to-serve? w)
@@ -1765,7 +2051,7 @@
 (begin-for-test
   (check-equal? (world-after-mouse-event WORLD-AFTER-SPACE-KEY
                                          340 394 MOUSE-BUTTON-DOWN)
-                (make-world (make-ball 330 384 3 -9)
+                (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 0 0 #true 10 10)
                             #false #true 1 0
                             (make-select-ball 340 394))
@@ -1774,14 +2060,14 @@
                racket selected")
   (check-equal? (world-after-mouse-event (initial-world 1)
                                          340 394 MOUSE-BUTTON-DOWN)
-                (make-world (make-ball 330 384 0 0)
+                (make-world (list (make-ball 330 384 0 0))
                             (make-racket 330 384 0 0 #false 0 0)
                             #true #false 1 0 (make-select-ball 0 0))
     "(world-after-mouse-event (initial-world 1)
            340 394 MOUSE-BUTTON-DOWN) should return: the same world")
   (check-equal? (world-after-mouse-event WORLD-AFTER-SPACE-KEY
                                          340 394 MOUSE-BUTTON-UP)
-                (make-world (make-ball 330 384 3 -9)
+                (make-world (list (make-ball 330 384 3 -9))
                             (make-racket 330 384 0 0 #false 0 0)
                             #false #true 1 0 (make-select-ball 340 394))
     "(world-after-mouse-event WORLD-AFTER-SPACE-KEY
@@ -1797,7 +2083,7 @@
                    (world-after-mouse-event
                     WORLD-AFTER-SPACE-KEY 330 384 MOUSE-BUTTON-DOWN))
                   200 200 MOUSE-DRAG)
-                (make-world (make-ball 333 375 3 -9)
+                (make-world (list (make-ball 333 375 3 -9))
                             (make-racket 200 200 0 0 #false 0 0)
                             #false #true 1 1
                             (make-select-ball 200 200))
@@ -1831,7 +2117,7 @@
 ;;(simulation 1) runs in super slow motion
 ;;(simulation 1/24) runs at a more realistic speed
 
-;; STRATEGY:
+;; STRATEGY: Combine simple functions.
 (define (simulation sim-speed)
   (big-bang (initial-world sim-speed)
             (on-mouse world-after-mouse-event)
