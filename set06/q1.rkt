@@ -3,7 +3,7 @@
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname q1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require rackunit)
 (require "extras.rkt")
-(check-location "04" "q1.rkt")
+(check-location "06" "q1.rkt")
 
 (provide inner-product
          permutation-of?
@@ -75,18 +75,9 @@
     "(inner-product (list 5 5 5 5) (list 1 2 3 4))
          should return: 50"))
 
-;; STRATEGY: Use Observer Template for IntList
-;;              on list1 and list2.
+;; STRATEGY: Use HOF foldr and map on list1 and list2.
 (define (inner-product list1 list2)
-  (cond
-    [(and (empty? list1)
-          (empty? list2))
-     0]
-    [else
-     (+ (* (first list1)
-           (first list2))
-        (inner-product (rest list1)
-                       (rest list2)))]))
+  (foldr + 0 (map * list1 list2)))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; equal-length? : IntList IntList -> Boolean
@@ -198,8 +189,7 @@
 ;; (shortlex-less-than? (list 3 0) (list 1 2)) => false
 ;; (shortlex-less-than? (list 0 3) (list 1 2)) => true
 
-;; STRATEGY: Use Observer Template for IntList
-;;              on list1 and list2.
+;; STRATEGY: Cases on the states of the given lists.
 (define (shortlex-less-than? list1 list2)
   (cond
     [(and (empty? list1)
