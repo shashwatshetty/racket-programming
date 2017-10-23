@@ -1,6 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-reader.ss" "lang")((modname q1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname q1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require rackunit)
 (require "extras.rkt")
 (check-location "06" "q1.rkt")
@@ -68,12 +68,25 @@
 (begin-for-test
   (check-equal? (inner-product empty empty)
                 0
-    "(inner-product (list) (list))
+                "(inner-product (list) (list))
          should return: 0")
   (check-equal? (inner-product (list 5 5 5 5) (list 1 2 3 4))
                 50
-    "(inner-product (list 5 5 5 5) (list 1 2 3 4))
+                "(inner-product (list 5 5 5 5) (list 1 2 3 4))
          should return: 50"))
+
+;; STRATEGY: Use Observer Template for IntList
+;;              on list1 and list2.
+;(define (inner-product list1 list2)
+;  (cond
+;    [(and (empty? list1)
+;          (empty? list2))
+;     0]
+;    [else
+;     (+ (* (first list1)
+;           (first list2))
+;        (inner-product (rest list1)
+;                       (rest list2)))]))
 
 ;; STRATEGY: Use HOF foldr and map on list1 and list2.
 (define (inner-product list1 list2)
@@ -91,13 +104,13 @@
 ;; TESTS:
 (begin-for-test
   (check-equal? (equal-length? empty (list 5)) #false
-     "(equal-length? (equal-length? empty (list 5))
+                "(equal-length? (equal-length? empty (list 5))
             should return: false")
   (check-equal? (equal-length? empty empty) #true
-     "(equal-length? empty empty) should return: true")
+                "(equal-length? empty empty) should return: true")
   (check-equal? (equal-length? (list 1 4) (list 5 9 7))
                 #false
-     "(equal-length? (list 1 4) (list 5 9 7))
+                "(equal-length? (list 1 4) (list 5 9 7))
            should return: false"))
 
 ;; STRATEGY: Compare length of the two lists.
@@ -123,22 +136,36 @@
 (begin-for-test
   (check-equal? (permutation-of? (list 4 5 9) (list 4 5 9))
                 #true
-    "(permutation-of? (list 4 5 9) (list 4 5 9))
+                "(permutation-of? (list 4 5 9) (list 4 5 9))
             should return: true")
   (check-equal? (permutation-of? empty empty)
                 #true
-    "(permutation-of? empty empty) should return: true")
+                "(permutation-of? empty empty) should return: true")
   (check-equal? (permutation-of? (list 4 5 9) (list 4 5 6))
                 #false
-    "(permutation-of? (list 4 5 9) (list 4 5 6))
+                "(permutation-of? (list 4 5 9) (list 4 5 6))
             should return: false")
   (check-equal? (permutation-of? (list 4 5 9) (list 4 5))
                 #false
-    "(permutation-of? (list 4 5 9) (list 4 5))
+                "(permutation-of? (list 4 5 9) (list 4 5))
             should return: false"))
 
 ;; STRATEGY: Use Observer Template for IntList
 ;;              on list1 and list2.
+;(define (permutation-of? list1 list2)
+;  (cond
+;    [(and (empty? list1)
+;          (empty? list2))
+;     #true]
+;    [(not (equal-length? list1 list2))
+;     #false]
+;    [(not (= (first (sort list1 <))
+;             (first (sort list2 <))))
+;     #false]
+;    [else (permutation-of? (rest (sort list1 <))
+;                           (rest (sort list2 <)))]))
+
+;; STRATEGY: Use HOF andmap on list1 and list2.
 (define (permutation-of? list1 list2)
   (cond
     [(and (empty? list1)
@@ -146,11 +173,9 @@
      #true]
     [(not (equal-length? list1 list2))
      #false]
-    [(not (= (first (sort list1 <))
-             (first (sort list2 <))))
-     #false]
-    [else (permutation-of? (rest (sort list1 <))
-                           (rest (sort list2 <)))]))
+    [else (andmap =
+                  (rest (sort list1 <))
+                  (rest (sort list2 <)))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; shortlex-less-than? : IntList IntList -> Boolean
@@ -164,22 +189,6 @@
 ;;            the first list is less than the rest of the
 ;;            second list according to shortlex-less-than?
 
-;; TESTS:
-(begin-for-test
-  (check-equal? (shortlex-less-than? empty empty) #false
-     "(shortlex-less-than? empty empty) should return: #false")
-  (check-equal? (shortlex-less-than? (list 5) (list 5)) #false
-     "(shortlex-less-than? (list 5) (list 5))
-            should return: #false")
-  (check-equal? (shortlex-less-than? (list 4 5 9) (list 4 5 9 12))
-                #true
-     "(shortlex-less-than? (list 4 5 9) (list 4 5 9 12))
-            should return: #true")
-  (check-equal? (shortlex-less-than? (list 4 5 8 9) (list 4 5 9 12))
-                #true
-     "(shortlex-less-than? (list 4 5 8 9) (list 4 5 9 12))
-            should return: #true"))
-
 ;; EXAMPLES:
 ;; (shortlex-less-than? (list) (list))         => false
 ;; (shortlex-less-than? (list) (list 3))       => true
@@ -188,6 +197,26 @@
 ;; (shortlex-less-than? (list 3) (list 1 2))   => true
 ;; (shortlex-less-than? (list 3 0) (list 1 2)) => false
 ;; (shortlex-less-than? (list 0 3) (list 1 2)) => true
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (shortlex-less-than? empty empty) #false
+     "(shortlex-less-than? empty empty) should return: #false")
+  (check-equal? (shortlex-less-than? (list 5) (list 4)) #false
+     "(shortlex-less-than? (list 5) (list 4))
+            should return: #false")
+  (check-equal? (shortlex-less-than? (list 4 5 9) (list 4 5 9 12))
+                #true
+     "(shortlex-less-than? (list 4 5 9) (list 4 5 9 12))
+            should return: #true")
+  (check-equal? (shortlex-less-than? (list 4 5 8 9) (list 4 5))
+                #false
+     "(shortlex-less-than? (list 4 5 8 9) (list 4 5))
+            should return: #false")
+  (check-equal? (shortlex-less-than? (list 4 5 8 9) (list 4 5 9 11))
+                #true
+     "(shortlex-less-than? (list 4 5 8 9) (list 4 5 9 11))
+            should return: #true"))
 
 ;; STRATEGY: Cases on the states of the given lists.
 (define (shortlex-less-than? list1 list2)
@@ -212,41 +241,41 @@
 ;; GIVEN:   a list of integers and the index
 ;; RETURNS: a list with the integer at given index at
 ;;            the start of the list.
-(define (new-start og-list indx)
-  (cons (list-ref og-list indx)
-        (remove (list-ref og-list indx) og-list)))
+;(define (new-start og-list indx)
+;  (cons (list-ref og-list indx)
+;        (remove (list-ref og-list indx) og-list)))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; swap : IntList Int Int -> IntList
 ;; GIVEN:   a list of integers and two elements in that list
 ;; RETURNS: a list with the two elements swapped with each other.
-(define (swap ilist e1 e2)
-  (cond
-    [(empty? ilist)
-     empty]
-    [(= (first ilist) e1)
-     (list* e2 (swap (rest ilist) e1 e2))]
-    [(= (first ilist) e2)
-     (list* e1 (swap (rest ilist) e1 e2))]
-    [else
-     (list* (first ilist) (swap (rest ilist) e1 e2))]))
+;(define (swap ilist e1 e2)
+;  (cond
+;    [(empty? ilist)
+;     empty]
+;    [(= (first ilist) e1)
+;     (list* e2 (swap (rest ilist) e1 e2))]
+;    [(= (first ilist) e2)
+;     (list* e1 (swap (rest ilist) e1 e2))]
+;    [else
+;     (list* (first ilist) (swap (rest ilist) e1 e2))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; permute : IntList IntList Int Int -> IntListList
 ;; GIVEN:   two lists of integers and two index references
 ;; RETURNS: a list with the permutations of the first list
 ;;             with the start element changed.
-(define (permute og-list new-list ref1 ref2)
-  (cond
-    [(= (list-ref og-list (- (length og-list) 1))
-        (list-ref new-list ref1))
-     (list* new-list (permute-last-two og-list
-                                       (new-start og-list ref1)
-                                       (- ref1 1) (- ref2 1)))]
-    [else
-     (list* new-list (permute-last-two og-list
-                                       (new-start og-list ref1)
-                                       ref1 (- ref2 1)))]))
+;(define (permute og-list new-list ref1 ref2)
+;  (cond
+;    [(= (list-ref og-list (- (length og-list) 1))
+;        (list-ref new-list ref1))
+;     (list* new-list (permute-last-two og-list
+;                                       (new-start og-list ref1)
+;                                       (- ref1 1) (- ref2 1)))]
+;    [else
+;     (list* new-list (permute-last-two og-list
+;                                       (new-start og-list ref1)
+;                                       ref1 (- ref2 1)))]))
 
 
 ;; (permute-last-two (list 1 2) (list 1 2) 0 1)
@@ -257,18 +286,30 @@
 ;; GIVEN:   two lists of integers and two index references
 ;; RETURNS: a list with the permutations of the first list
 ;;              with only the last two digits considered.
-(define (permute-last-two og-list new-list ref1 ref2)
-  (cond
-    [(< ref1 0)
-     empty]
-    [(= (length new-list) ref2)
-     (permute og-list new-list ref1 ref2)]
-    [else
-     (list* new-list (permute-last-two og-list
-                                       (swap og-list
-                                             (list-ref new-list ref2)
-                                             (list-ref new-list (- ref2 1)))
-                                       ref1 (+ 1 ref2)))]))
+
+;; STRATEY: 
+;(define (permute-last-two og-list new-list ref1 ref2)
+;  (cond
+;    [(< ref1 0)
+;     empty]
+;    [(= (length new-list) ref2)
+;     (permute og-list new-list ref1 ref2)]
+;    [else
+;     (list* new-list (permute-last-two og-list
+;                                       (swap og-list
+;                                             (list-ref new-list ref2)
+;                                             (list-ref new-list (- ref2 1)))
+;                                       ref1 (+ 1 ref2)))]))
+
+;; STRATEGY: Use HOF foldr on lst.
+(define (permute-last-two lst)
+  (foldr append
+         empty
+         (map (lambda (i)
+                (map (lambda (j)
+                       (list* i j))
+                     (permutations (remove i lst))))
+              lst)))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; permutations : IntList IntList Int Int -> IntListList
@@ -299,6 +340,8 @@
                 (list (list 1 2 3)
                       (list 1 3 2)
                       (list 2 1 3)
+                      (list 2 3 1)
+                      (list 3 1 2)
                       (list 3 2 1))
      "(permutations (permutations (list 1 2 3))
          should return: (list (list 1 2 3)
@@ -307,12 +350,19 @@
                               (list 3 2 1))"))
 
 ;; STRATEGY: Cases on length of list.
+;(define (permutations lst)
+;  (cond
+;    [(or (empty? lst)
+;         (= (length lst) 1))
+;     (list lst)]
+;    [else
+;     (permute-last-two lst lst
+;                       (- (length lst) 2)
+;                       (- (length lst) 1))]))
+
+;; STRATEGY: Combine Simpler Functions.
 (define (permutations lst)
   (cond
-    [(or (empty? lst)
-         (= (length lst) 1))
+    [(<= (length lst) 1)
      (list lst)]
-    [else
-     (permute-last-two lst lst
-                       (- (length lst) 2)
-                       (- (length lst) 1))]))
+    [else (sort (permute-last-two lst) shortlex-less-than?)]))

@@ -205,14 +205,17 @@
     [(and (empty? list1)
           (empty? list2))
      #false]
+    [(< (length list1) (length list2))
+     #true]
     [(> (length list1) (length list2))
      #false]
+    [(< (first list1) (first list2))
+     #true]
     [(> (first list1) (first list2))
      #false]
     [(= (first list1) (first list2))
      (shortlex-less-than? (rest list1)
-                          (rest list2))]
-    [else #true]))
+                          (rest list2))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; new-start : IntList PosInt -> IntList

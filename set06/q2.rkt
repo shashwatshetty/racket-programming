@@ -26,7 +26,7 @@
          racket-after-mouse-event
          racket-selected?)
 
-;; SquashPractise3
+;; SquashPractise4
 ;; Simulates squash practise. Simulation starts when the space button
 ;; is pressed. Simulation contains a squash racket and a squash ball as
 ;; objects interacting with each other and the simulation environment.
@@ -94,7 +94,7 @@
 ;;         (ball-vy ball))
 
 ;; A Racket is represented as a struct
-;; (make-racket x y vx vy selected? x-distance)
+;; (make-racket x y vx vy selected? x-distance y-distance)
 ;;  with the following fields:
 ;; INTERP:
 ;;    x           : Integer is the x-co-ordinate of the
@@ -216,7 +216,8 @@
 ;; RETURNS: the ready-to-serve state of the world.
 
 ;; EXAMPLES:
-;; (initial-world 1) => (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
+;; (initial-world 1) => (make-world (list (make-ball SERVE-X-CORD
+;;                                                   SERVE-Y-CORD 0 0))
 ;;                                  (make-racket 330 384 0 0 #false 0 0)
 ;;                                  #true
 ;;                                  #false
@@ -254,7 +255,8 @@
 ;; RETURNS: true iff the world is not in its ready-to-serve state.
 
 ;; EXAMPLES:
-;; (update-serve-ready (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
+;; (update-serve-ready (make-world (list (make-ball SERVE-X-CORD
+;;                                                  SERVE-Y-CORD 0 0))
 ;;                                 (make-racket 330 384 0 0 #false 0 0)
 ;;                                 #true
 ;;                                 #false
@@ -267,7 +269,8 @@
 (begin-for-test
   (check-equal? (update-serve-ready
                  (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
-                             (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
+                             (make-racket SERVE-X-CORD
+                                          SERVE-Y-CORD 0 0 #false 0 0)
                              #true
                              #false
                              1
@@ -301,7 +304,8 @@
 (begin-for-test
   (check-equal? (update-in-rally
                  (make-world (list (make-ball SERVE-X-CORD SERVE-Y-CORD 0 0))
-                             (make-racket SERVE-X-CORD SERVE-Y-CORD 0 0 #false 0 0)
+                             (make-racket SERVE-X-CORD
+                                          SERVE-Y-CORD 0 0 #false 0 0)
                              #true
                              #false
                              1
@@ -424,6 +428,16 @@
 ;; (any-ball-hitting-bottom-wall? (make-ball 20 645 3 9))   => #true
 ;; (any-ball-hitting-bottom-wall? (make-ball 150 350 3 -9)) => #false
 
+;; STRATEGY: Use Observer Template for BallList
+;;              on blist.
+;(define (any-ball-hitting-bottom-wall? blist)
+;  (cond
+;    [(empty? blist)
+;     #false]
+;    [else
+;     (or (ball-hitting-bottom-wall? (first blist))
+;         (any-ball-hitting-bottom-wall? (rest blist)))]))
+
 ;; STRATEGY: Use HOF ormap on blist.
 (define (any-ball-hitting-bottom-wall? blist)
   (ormap ball-hitting-bottom-wall?
@@ -447,6 +461,17 @@
                 (list (make-ball 150 350 3 -9))
                 "(disappear-ball with BallList having one ball colliding
           with bottom wall should return list with that ball removed"))
+
+;; STRATEGY: Use Observer Template for BallList
+;;              on blist.
+;(define (disappear-ball blist)
+;  (cond
+;    [(empty? blist)
+;     empty]
+;    [(ball-hitting-bottom-wall? (first blist))
+;     (disappear-ball (rest blist))]
+;    [else
+;     (list* (first blist) (disappear-ball (rest blist)))]))
 
 ;; STRATEGY: Use HOF filter on blist.
 (define (disappear-ball blist)
@@ -684,6 +709,8 @@
 ;    [else
 ;     (list* (move-ball (first blist) racket)
 ;            (move-balls (rest blist) racket))]))
+
+;; STRATEGY: Use HOF map on blist
 (define (move-balls blist racket)
   (map
    ;; Ball -> Ball
@@ -826,6 +853,16 @@
          BallList with one ball hitting the racket
         (make-racket 120 647 0 5 #false 0 0))
             should return: #true"))
+
+;; STRATEGY: Use Observer Template for BallList
+;;              on blist.
+;(define (racket-hitting-any-balls? blist racket)
+;  (cond
+;    [(empty? blist)
+;     #false]
+;    [else
+;     (or (ball-hitting-racket? (first blist) racket)
+;         (racket-hitting-any-balls? (rest blist) racket))]))
 
 ;; STRATEGY: Use HOF ormap on blist.
 (define (racket-hitting-any-balls? blist racket)
@@ -1010,7 +1047,7 @@
                (racket-y-distance racket)))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
-;; update-racket-selected : Racket Integer Integer MouseEvent -> Boolean
+;; update-racket-selected : Racket Integer Integer -> Boolean
 ;; GIVEN:   a racket, the x and y coordinates of a mouse event,
 ;;            and the mouse event
 ;; RETURNS: the updated value of if the racket is selected.

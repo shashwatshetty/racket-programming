@@ -94,7 +94,7 @@
 ;;         (ball-vy ball))
 
 ;; A Racket is represented as a struct
-;; (make-racket x y vx vy selected? x-distance)
+;; (make-racket x y vx vy selected? x-distance y-distance)
 ;;  with the following fields:
 ;; INTERP:
 ;;    x           : Integer is the x-co-ordinate of the
