@@ -305,8 +305,18 @@
 (define (permute-last-two lst)
   (foldr append
          empty
-         (map (lambda (i)
-                (map (lambda (j)
+         (map
+          ;; Integer -> IntListList
+          ;; GIVEN:   an Integer.
+          ;; RETURNS: list of IntList of all permutations with
+          ;;            given integer at the beginning of the all lists.
+          (lambda (i)
+                (map
+                    ;; IntList -> IntList
+                    ;; GIVEN:   an integer list.
+                    ;; RETURNS: the same IntList with i as the integer
+                    ;;           at the beginning of the all list.
+                 (lambda (j)
                        (list* i j))
                      (permutations (remove i lst))))
               lst)))

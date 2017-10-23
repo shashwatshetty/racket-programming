@@ -475,7 +475,12 @@
 
 ;; STRATEGY: Use HOF filter on blist.
 (define (disappear-ball blist)
-  (filter (lambda (b) (not (ball-hitting-bottom-wall? b)))
+  (filter
+   ;; Ball -> Boolean
+   ;; GIVEN:   a ball
+   ;; RETURNS: true iff the ball is not colliding with the
+   ;;            bottom wall in the next tick.
+   (lambda (b) (not (ball-hitting-bottom-wall? b)))
           blist))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
