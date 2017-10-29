@@ -1,6 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-reader.ss" "lang")((modname q1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname q1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require rackunit)
 (require "extras.rkt")
 (check-location "07" "q1.rkt")
@@ -489,49 +489,199 @@
 (define (block? exp)
   (block-exp? exp))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CONTRACT & PURPOSE STATEMENTS:
+;; var-in-operands? : ArithmeticExpressionList Variable -> Boolean
+;; GIVEN:   an ArithmeticExpressionList alist and a variable v
+;; WHERE:   alist is part of some block b
+;;          v is the variable defined by the block b.
+;; RETURNS: true iff the variable v is used somewhere in alist.
+
+;;STRATEGY: Use HOF ormap on op-list.
+(define (var-in-operands? op-list v)
+  (ormap
+   ;; ArithmeticExpression -> Boolean
+   ;; GIVEN:   an ArithmeticExpression.
+   ;; RETURNS: true iff the variable is v is used somewhere in.
+   ;;          the expression exp.
+   (lambda (exp)
+     (var-in-sub-exp? exp v))
+   op-list))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
-;; undefined-variables-in-operands : ArithmeticExpressionList -> StringList
-;; GIVEN:   
-;; RETURNS: 
+;; var-in-sub-exp? : ArithmeticExpression Variable -> Boolean
+;; GIVEN:   an ArithmeticExpression r and a variable v
+;; WHERE:   r is part of some block b
+;;          v is the variable defined by the block b.
+;; RETURNS: true iff the variable v is used somewhere in the
+;;           expression r.
 
 ;; EXAMPLES:
+;; (var-in-sub-exp? (block (var "x")
+;;                         (block (var "e")
+;;                                (lit 2)
+;;                                (var "x1"))
+;;                         (var "x"))
+;;                  (var "x"))            => #true
+;; (var-in-sub-exp? (block (var "x")
+;;                         (block (var "e")
+;;                                (lit 2)
+;;                                (var "z"))
+;;                         (var "d"))
+;;                  (var "y"))            => #false
 
-;; TESTS:
+;; STRATEGY:  Use Observer Template for ArithmeticExpression
+;;                                on r.
+(define (var-in-sub-exp? r v)
+  (cond
+    [(variable? r)
+     (string=? (variable-name v) (variable-name r))]
+    [(call? r)
+     (or (var-in-sub-exp? (call-operator r) v)
+         (var-in-operands? (call-operands r) v))]
+    [(block? r)
+     (or (var-in-sub-exp? (block-var r) v)
+         (var-in-sub-exp? (block-rhs r) v)
+         (var-in-sub-exp? (block-body r) v))]
+    [else
+     #false]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; is-var-defined? : Block Variable -> Boolean
+;; GIVEN:   a Block b and a variable v
+;; WHERE:   v is the variable defined by the block b.
+;; RETURNS: true iff the variable is said to be defined.
+;;          that is, v is used somewhere in the body of b
+;;           and not anywhere in the rhs of b.
+
+;; EXAMPLES:
+;; (is-var-defined? (block (var "x")
+;;                         (block (var "x")
+;;                                (lit 2)
+;;                                (var "x"))
+;;                         (var "x"))
+;;                  (var "x"))               => #false
+;; (is-var-defined? (block (var "x")
+;;                         (block (var "y")
+;;                                (lit 2)
+;;                                (var "z"))
+;;                         (var "x"))
+;;                  (var "x"))               => #true
+
+;; STRATEGY: Combine Simpler Functions.
+(define (is-var-defined? b v)
+  (and (not (var-in-sub-exp? (block-rhs b) (block-var b)))
+       (var-in-sub-exp? (block-body b) (block-var b))))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; undefined-variables-in-block : Block VariableList -> StringList
+;; GIVEN:   a Block b and list of variables vlist
+;; WHERE:   vlist is the set of variables that are said to be defined upto
+;;          the occurence of b.
+;; RETURNS: a list of the names of all undefined variables 
+;;           that occur within the block b, in any order.
+
+;; EXAMPLES:
+;; (undefined-variables-in-block (block (var "a")
+;;                                         (var "z")
+;;                                         (call (op "+")
+;;                                               (list (var "a")
+;;                                                     (var "x"))))
+;;                                 (list (var "x")))
+;;                                              =>     (list "z")
+
+;; STRATEGY: Cases on if variable defined by the block
+;;             is said to be defined.
+(define (undefined-variables-in-block b def-list)
+  (if (is-var-defined? b (block-var b))
+      (append (undefined-variables-list (block-rhs b) def-list)
+              (undefined-variables-list (block-body b)
+                                        (list* (block-var b)
+                                               def-list)))
+      (append (list (variable-name (block-var b)))
+              (undefined-variables-list (block-rhs b) def-list)
+              (undefined-variables-list (block-body b) def-list))))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; undefined-variables-in-operands : ArithmeticExpressionList VariableList
+;;                                                   -> StringList
+;; GIVEN:   a list of  arithmetic expressions alist and
+;;             list of variables vlist
+;; WHERE:   vlist is the set of variables that are said to be defined before
+;;          the occurence of alist.
+;; RETURNS: a list of the names of all undefined variables 
+;;           that occur within the alist, in any order.
+
+;; EXAMPLES:
+;; (undefined-variables-in-operands (list (var "x")
+;;                                        (var "y"))
+;;                                  (list (var "y")))
+;;                                       => (list "x")
 
 ;; STRATEGY: Use Observer Template for ArithmeticExpressionList
 ;;                                   on alist.
-(define (undefined-variables-in-operands alist)
+(define (undefined-variables-in-operands alist def-list)
   (cond
     [(empty? alist) empty]
     [else
-     (append (undefined-variables (first alist))
-             (undefined-variables-in-operands (rest alist)))]))
+     (append (undefined-variables-list (first alist) def-list)
+             (undefined-variables-in-operands (rest alist) def-list))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
-;; undefined-variables-list : ArithmeticExpression -> StringList
-;; GIVEN:   
-;; RETURNS: 
+;; undefined-variables-list : ArithmeticExpression VariableList
+;;                                           -> StringList
+;; GIVEN:   an arbitrary arithmetic expression aexp and
+;;             list of variables vlist
+;; WHERE:   aexp is a part of some other larger Arithmetic Expression ae
+;; AND:     vlist is the set of variables that are said to be defined before
+;;          the occurence of aexp.
+;; RETURNS: a list of the names of all undefined variables 
+;;           for the expression aexp, in any order.
 
 ;; EXAMPLES:
-
-
-;; TESTS:
+;; (undefined-variables-list (block (var "x")
+;;                                  (var "x")
+;;                                  (block (var "x")
+;;                                         (var "z")
+;;                                         (call (op "+")
+;;                                               (list (var "a")
+;;                                                     (var "x")))))
+;;                           (list (var "a")))
+;;                                       =>   (list "x" "x" "z")
 
 ;; STRATEGY: Use Observer Template for ArithmeticExpression
 ;;                                on aexp.
-(define (undefined-variables-list aexp)
+(define (undefined-variables-list aexp def-list)
   (cond
-    [(variable? aexp) (list (variable-name aexp))]
+    [(variable? aexp)
+     (if (member? aexp def-list)
+         empty
+         (list (variable-name aexp)))]
     [(call? aexp)
-     (append (undefined-variables-list (call-operator aexp))
-             (undefined-variables-in-operands (call-operands aexp)))]
+     (append (undefined-variables-list (call-operator aexp)
+                                       def-list)
+             (undefined-variables-in-operands (call-operands aexp)
+                                              def-list))]
     [(block? aexp)
-     (append (list (variable-name (block-var aexp)))
-             (undefined-variables-list (block-rhs aexp))
-             (undefined-variables-list (block-body aexp)))]
+     (undefined-variables-in-block aexp def-list)]
     [else empty]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; remove-duplicates : StringList -> StringList
+;; GIVEN:   a StringList
+;; RETURNS: the same StringList without any duplicate elements.
+
+;; EXAMPLES:
+;; (remove-duplicates (list "x" "x" "y")) => (list "x" "y")
+
+;; STRATEGY: Use Observer Template for StringList on alist.
+(define (remove-duplicates alist)
+  (cond
+    [(empty? alist)
+     empty]
+    [(member? (first alist) (rest alist))
+     (remove-duplicates (rest alist))]
+    [else
+     (list* (first alist) (remove-duplicates (rest alist)))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; undefined-variables : ArithmeticExpression -> StringList
@@ -550,5 +700,35 @@
 ;;                         (var "y"))
 ;;                  (var "z"))))
 ;;  => some permutation of (list "f" "x" "z")
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (undefined-variables
+                 (block (var "x")
+                        (block (var "y")
+                               (lit 2)
+                               (var "y"))
+                        (block (var "a")
+                               (block (var "k")
+                                      (var "l")
+                                      (var "m"))
+                               (block (var "z")
+                                      (lit 5)
+                                      (call (op "*")
+                                            (list (var "x")
+                                                  (var "z")))))))
+                (list "a" "k" "l" "m")
+                "There are 7 unique variables in the expression where
+             3 are defined and 4 undefined")
+  (check-equal? (undefined-variables (block (var "x")
+                              (block (var "x")
+                                     (lit 2)
+                                     (var "x"))
+                              (var "x")))
+                (list "x")
+      "There are 2 instances of variables x
+          out of which 1 is undefined"))
+
+;; STRATEGY: Initialise the invariant for undefined-variables-list.
 (define (undefined-variables ae)
-  (empty))
+  (remove-duplicates (undefined-variables-list ae empty)))
