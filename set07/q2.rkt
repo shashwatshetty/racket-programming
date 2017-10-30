@@ -1,9 +1,9 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname q1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname q2) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require rackunit)
 (require "extras.rkt")
-(check-location "07" "q1.rkt")
+;(check-location "07" "q2.rkt")
 
 (provide lit
          literal-value
@@ -23,7 +23,8 @@
          block-rhs
          block-body
          block?
-         undefined-variables)
+         undefined-variables
+         well-typed?)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -87,6 +88,29 @@
     [else (... (first a)
                (stl-fn (rest a)))]))
 
+;; A Type is represented as one of the following strings:
+;;     -- "Int"      (indicating type Integer)
+;;     -- "Op0"      (indicating operation to be "+" or "*")
+;;     -- "Op1"      (indicating operation to be "-" or "/")
+;;     -- "Error"    (indicating type error)
+;;     -- "TBD"       (indicating to be defined)
+
+;; EXAMPLES:
+(define INT "Int")
+(define OP0 "Op0")
+(define OP1 "Op1")
+(define ERR "Error")
+(define TBD "TBD")
+
+;; OBSERVER TEMPLATE:
+;; type-fn : Type -> ??
+#;
+(define (type-fn t)
+  (cond ((string=? t INT) ...)
+        ((string=? t OP0) ...)
+        ((string=? t OP1) ...)
+        ((string=? t ERR) ...)))
+
 ;; An OperationName is represented as one of the following strings:
 ;;     -- "+"      (indicating addition)
 ;;     -- "-"      (indicating subtraction)
@@ -94,50 +118,60 @@
 ;;     -- "/"      (indicating division)
 ;;
 
+;; EXAMPLES:
+(define ADD "+")
+(define SUB "-")
+(define MUL "*")
+(define DIV "/")
+
 ;; OBSERVER TEMPLATE:
 ;; operation-name-fn : OperationName -> ??
 #;
 (define (operation-name-fn op)
-  (cond ((string=? op "+") ...)
-        ((string=? op "-") ...)
-        ((string=? op "*") ...)
-        ((string=? op "/") ...)))
+  (cond ((string=? op ADD) ...)
+        ((string=? op SUB) ...)
+        ((string=? op MUL) ...)
+        ((string=? op DIV) ...)))
 
 ;; An Operation is represented as a struct
-;; (make-operation name)
+;; (make-operation name type)
 ;;  with the following fields:
 ;; INTERP:
 ;;    name : OperationName is the name of the operation.
+;;    type : Type is the type of the operation.
 
 ;; IMPLEMENTATION:
-(define-struct operation (name))
+(define-struct operation (name type))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-operation OperationName)
+;; (make-operation OperationName Type)
 
 ;; OBSERVER TEMPLATE:
 ;; operation-fn: Operation -> ?
 ;; (define (operation-fn op)
-;;    (... (operation-name op))
+;;    (... (operation-name op)
+;;         (operation-type op))
 
 ;; A Variable is represented as a struct
-;; (make-variable name)
+;; (make-variable name type)
 ;;  with the following fields:
 ;; INTERP:
 ;;    name : String (the string begins with a letter and contains
 ;;                     nothing but letters and digits)
 ;;               is the name of the variable.
+;;    type : Type is the type of the variable.
 
 ;; IMPLEMENTATION:
-(define-struct variable (name))
+(define-struct variable (name type))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-variable String)
+;; (make-variable String Type)
 
 ;; OBSERVER TEMPLATE:
 ;; variable-fn: Variable -> ?
 ;; (define (variable-fn v)
-;;    (... (variable-name v))
+;;    (... (variable-name v)
+;;         (variable-type v))
 
 ;; A sequence of Variables (VariableList)
 ;;           is represented as a list of a Variables.
@@ -160,45 +194,50 @@
                (vl-fn (rest a)))]))
 
 ;; A Literal is represented as a struct
-;; (make-literal value)
+;; (make-literal value type)
 ;;  with the following fields:
 ;; INTERP:
 ;;    value : Real is the value of the literal.
+;;    type  : Type is the type of the literal,
+;;               which is always Int.
 
 ;; IMPLEMENTATION:
-(define-struct literal (value))
+(define-struct literal (value type))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-literal Real)
+;; (make-literal Real Type)
 
 ;; OBSERVER TEMPLATE:
 ;; literal-fn: Literal -> ?
 ;; (define (literal-fn l)
-;;    (... (literal-value l))
+;;    (... (literal-value l)
+;;         (literal-type l))
 
 ;; A Call is represented as a struct
-;; (make-call-exp operator operands)
+;; (make-call-exp operator operands type)
 ;;  with the following fields:
 ;; INTERP:
 ;;    operator : ArithmeticExpression     is the operator
 ;;                                          expression of that call.
 ;;    operands : ArithmeticExpressionList is the operand
 ;;                                          expression of that call.
+;;    type     : Type                     is the type of the call.
 
 ;; IMPLEMENTATION:
-(define-struct call-exp (operator operands))
+(define-struct call-exp (operator operands type))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-call-exp ArithmeticExpression ArithmeticExpressionList)
+;; (make-call-exp ArithmeticExpression ArithmeticExpressionList Type)
 
 ;; OBSERVER TEMPLATE:
 ;; call-fn: Call -> ?
 ;; (define (call-exp-fn c)
 ;;    (... (call-exp-operator c)
-;;         (call-exp-operands c))
+;;         (call-exp-operands c)
+;;         (call-exp-type c))
 
 ;; A Block is represented as a struct
-;; (make-block-exp var rhs body)
+;; (make-block-exp var rhs body type)
 ;;  with the following fields:
 ;; INTERP:
 ;;   var  : Variable             is the variable defined by that block.
@@ -207,18 +246,21 @@
 ;;                                  defined by that block.
 ;;   body : ArithmeticExpression is the expression whose value will become
 ;;                                  the value of the block expression.
+;;   type : Type                 is the type of the block.
 
 ;; IMPLEMENTATION:
-(define-struct block-exp (var rhs body))
+(define-struct block-exp (var rhs body type))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-block-exp Variable ArithmeticExpression ArithmeticExpression)
+;; (make-block-exp Variable ArithmeticExpression ArithmeticExpression Type)
 
 ;; OBSERVER TEMPLATE:
 ;; block-fn: Block -> ?
 ;; (define (block-exp-fn b)
-;;    (... (block-exp-operator b)
-;;         (block-exp-operands b))
+;;    (... (block-exp-var b)
+;;         (block-exp-rhs b)
+;;         (block-exp-body b)
+;;         (block-exp-type b))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -232,17 +274,17 @@
 ;; RETURNS: a literal that represents that number.
 
 ;; EXAMPLE:
-;; (lit 3)    => (make-literal 3)
-;; (lit -2.5) => (make-literal -2.5)
+;; (lit 3)    => (make-literal 3 "Int")
+;; (lit -2.5) => (make-literal -2.5 "Int")
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (lit 5) (make-literal 5)
+  (check-equal? (lit 5) (make-literal 5 "Int")
      "(lit 5) should return: a Literal with value 5"))
 
 ;; STRATEGY: Use Constructor Template for Literal.
 (define (lit num)
-  (make-literal num))
+  (make-literal num INT))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; var : String -> Variable
@@ -252,16 +294,16 @@
 ;; RETURNS: a variable whose name is the given string
 
 ;; EXAMPLE:
-;; (var "x15") => (make-variable `"x15")
+;; (var "x15") => (make-variable `"x15" "TBD")
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (var "y2") (make-variable "y2")
+  (check-equal? (var "y2") (make-variable "y2" "TBD")
      "(var y2) should return: A Variable with name y2"))
 
 ;; STRATEGY: Use Constructor Template for Variable.
 (define (var name)
-  (make-variable name))
+  (make-variable name TBD))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; op : OperationName -> Operation
@@ -269,17 +311,22 @@
 ;; RETURNS: the operation with that name.
 
 ;; EXAMPLE:
-;; (op "-") => (make-operation "-")
-;; (op "*") => (make-operation "*")
+;; (op "-") => (make-operation "-" "Op1")
+;; (op "*") => (make-operation "*" "Op0")
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (op "+") (make-operation "+")
+  (check-equal? (op "+") (make-operation "+" "Op0")
      "(op +) should return: an Operation with name +"))
 
-;; STRATEGY: Use Constructor Template for Literal.
+;; STRATEGY: Use Observer Template for OperationName
+;;                thne use Constructor Template for Operation.
 (define (op name)
-  (make-operation name))
+  (cond
+    [(string=? name ADD) (make-operation name OP0)]
+    [(string=? name MUL) (make-operation name OP0)]
+    [(string=? name SUB) (make-operation name OP1)]
+    [(string=? name DIV) (make-operation name OP1)]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; call : ArithmeticExpression ArithmeticExpressionList -> Call
@@ -295,16 +342,17 @@
 ;; TESTS:
 (begin-for-test
   (check-equal? (call (op "-") (list (lit 7) (lit 2.5)))
-                (make-call-exp (make-operation "-")
-                               (list (make-literal 7)
-                                     (make-literal 2.5)))
+                (make-call-exp (make-operation "-" "Op1")
+                               (list (make-literal 7 "Int")
+                                     (make-literal 2.5 "Int"))
+                               "TBD")
      "(call (op -) (list (lit 7) (lit 2.5)))
            should return: A Call with operator as -
                     and operands as a list with 7 and 2.5"))
 
 ;; STRATEGY: Use Constructor Template for Call.
 (define (call operator operand)
-  (make-call-exp operator operand))
+  (make-call-exp operator operand TBD))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; call-operator : Call -> ArithmeticExpression
@@ -355,6 +403,30 @@
   (call-exp-operands exp))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
+;; call-type : Call -> Type
+;; GIVEN:   a call
+;; RETURNS: the type of that call
+
+;; EXAMPLE:
+;; (call-type (call (op "-")
+;;                  (list (lit 7) (lit 2.5))))
+;;         => "TBD"
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (call-type (call (op "+")
+                                     (list (lit 10)
+                                           (lit 5.2))))
+                TBD
+     "(call-operands (call (op +)(list (lit 10) (lit 5.2))))
+          should return: TBD"))
+
+;; STRATEGY: Use Observer Template for Call
+;;                        on exp.
+(define (call-type exp)
+  (call-exp-type exp))
+
+;; CONTRACT & PURPOSE STATEMENTS:
 ;; call? : ArithmeticExpression -> Boolean
 ;; GIVEN:   an arithmetic expression
 ;; RETURNS: true if and only the expression is a call.
@@ -395,24 +467,27 @@
 ;;                                     (lit 5)
 ;;                                     (call (op "*")
 ;;                                           (list (var "x6")
-;;                                                 (var "x7")))))
+;;                                                 (var "x7")))
+;;                                     "TBD"))
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (block (var "x")(lit 5)
                        (call (op "*")(list (var "10") (var "2"))))
-                (make-block-exp (make-variable "x")
-                                (make-literal 5)
-                                (make-call-exp (make-operation "*")
-                                               (list (make-variable "10")
-                                                     (make-variable "2"))))
+                (make-block-exp (make-variable "x" "TBD")
+                                (make-literal 5 "Int")
+                                (make-call-exp (make-operation "*" "Op0")
+                                               (list (make-variable "10" "TBD")
+                                                     (make-variable "2" "TBD"))
+                                               "TBD")
+                                "TBD")
       "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
           should return: A Block with var as x, rhs as 5
                      and a body with call with 10 and 2 multiplied"))
 
 ;; STRATEGY: Use Constructor Template for Block.
 (define (block var rhs body)
-  (make-block-exp var rhs body))
+  (make-block-exp var rhs body TBD))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; block-var : Block -> Variable
@@ -476,7 +551,7 @@
 ;;          the block expression.
 
 ;; EXAMPLE:
-;; (block-rhs (block (var "x5")
+;; (block-body (block (var "x5")
 ;;                   (lit 5)
 ;;                   (call (op "*")
 ;;                         (list (var "x6") (var "x7")))))
@@ -496,6 +571,33 @@
 ;;                        on b.
 (define (block-body b)
   (block-exp-body b))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; block-type : Block -> Type
+;; GIVEN:   a block
+;; RETURNS: the type of the block.
+
+;; EXAMPLE:
+;; (block-type (block (var "x5")
+;;                    (lit 5)
+;;                    (call (op "*")
+;;                          (list (var "x6") (var "x7")))))
+;;         => "TBD"
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (block-type (block (var "x")(lit 5)
+                                   (call (op "*")
+                                         (list (var "10")
+                                               (var "2")))))
+                TBD
+      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
+          should return: TBD"))
+
+;; STRATEGY: Use Observer Template for Block
+;;                        on b.
+(define (block-type b)
+  (block-exp-type b))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; block? : ArithmeticExpression -> Boolean
@@ -771,3 +873,83 @@
 ;; STRATEGY: Initialise the invariant for undefined-variables-list.
 (define (undefined-variables ae)
   (remove-duplicates (undefined-variables-list ae empty)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define EMPTY empty)
+;(define (is-error? aexp def-list)
+;  (cond
+;    [(variable? aexp)
+;     (if (member? aexp def-list))]))
+
+(define (well-typed? aexp)
+  empty)
+
+(define (contains? var def-list)
+  (ormap (lambda (v)(string=? (variable-name var)
+                              (variable-name v)))
+         def-list))
+
+(define (get-type-in-list var def-list)
+  (cond
+    [(string=? (variable-name var)
+               (variable-name (first def-list)))
+     (variable-type (first def-list))]
+    [else (get-type-in-list var (rest def-list))]))
+
+;(define (update-var-in-list var def-list typ)
+;  (cond
+;    [(empty? def-list)
+;     empty]
+;    [(string=? (variable-name var)
+;               (variable-name (first def-list)))
+;     (cons (make-variable (variable-name var) typ)
+;           (rest def-list))]
+;    []))
+
+(define (update-list var rhs def-list)
+  (if (contains? var def-list)
+      (list* (make-variable (variable-name var)
+                            (get-type rhs def-list))
+             (filter (lambda (n)
+                       (not (string=? (variable-name var)
+                                      (variable-name n))))
+                     def-list))
+      (list* (make-variable (variable-name var)
+                            (get-type rhs def-list))
+             def-list)))
+
+(define (get-type aexp def-list)
+  (cond
+    [(literal? aexp)
+     (literal-type aexp)]
+    [(operation? aexp)
+     (operation-type aexp)]
+    [(variable? aexp)
+     (if (contains? aexp def-list)
+         (get-type-in-list aexp def-list)
+         ERR)]
+    [(block? aexp)
+     (if (string=? (get-type (block-rhs aexp) def-list) ERR)
+         ERR
+         (get-type (block-body aexp)
+                   (update-list (block-var aexp)
+                                (block-rhs aexp)
+                                def-list)))]
+   ; [(call? aexp)
+   ;  (get-call-type aexp def-list)]
+    ))
+
+(define (test-func aexp def-list)
+  (cond
+    [(variable? aexp)
+     (if (member? aexp def-list)
+         empty
+         (list (variable-name aexp)))]
+    [(call? aexp)
+     (append (undefined-variables-list (call-operator aexp)
+                                       def-list)
+             (undefined-variables-in-operands (call-operands aexp)
+                                              def-list))]
+    [(block? aexp)
+     (undefined-variables-in-block aexp def-list)]
+    [else empty]))
