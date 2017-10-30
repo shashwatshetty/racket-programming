@@ -3,7 +3,7 @@
 #reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname q2) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require rackunit)
 (require "extras.rkt")
-;(check-location "07" "q2.rkt")
+(check-location "07" "q2.rkt")
 
 (provide lit
          literal-value
@@ -50,7 +50,7 @@
         ((block? exp) ...)))
 
 ;; A sequence of ArithmeticExpressions (ArithmeticExpressionList)
-;;           is represented as a list of a ArithmeticExpressions.
+;;           is represented as a list of ArithmeticExpressions.
 
 ;; CONSTRUCTOR TEMPLATES:
 ;; empty                           -- the empty sequence
@@ -93,14 +93,12 @@
 ;;     -- "Op0"      (indicating operation to be "+" or "*")
 ;;     -- "Op1"      (indicating operation to be "-" or "/")
 ;;     -- "Error"    (indicating type error)
-;;     -- "TBD"       (indicating to be defined)
 
 ;; EXAMPLES:
 (define INT "Int")
 (define OP0 "Op0")
 (define OP1 "Op1")
 (define ERR "Error")
-(define TBD "TBD")
 
 ;; OBSERVER TEMPLATE:
 ;; type-fn : Type -> ??
@@ -138,7 +136,7 @@
 ;;  with the following fields:
 ;; INTERP:
 ;;    name : OperationName is the name of the operation.
-;;    type : Type is the type of the operation.
+;;    type : Type          is the type of the operation.
 
 ;; IMPLEMENTATION:
 (define-struct operation (name type))
@@ -158,8 +156,9 @@
 ;; INTERP:
 ;;    name : String (the string begins with a letter and contains
 ;;                     nothing but letters and digits)
-;;               is the name of the variable.
+;;                is the name of the variable.
 ;;    type : Type is the type of the variable.
+;;                (initially defined as "Error")
 
 ;; IMPLEMENTATION:
 (define-struct variable (name type))
@@ -198,8 +197,8 @@
 ;;  with the following fields:
 ;; INTERP:
 ;;    value : Real is the value of the literal.
-;;    type  : Type is the type of the literal,
-;;               which is always Int.
+;;    type  : Type is the type of the literal.
+;;                 (Always "Int")
 
 ;; IMPLEMENTATION:
 (define-struct literal (value type))
@@ -214,30 +213,28 @@
 ;;         (literal-type l))
 
 ;; A Call is represented as a struct
-;; (make-call-exp operator operands type)
+;; (make-call-exp operator operands)
 ;;  with the following fields:
 ;; INTERP:
 ;;    operator : ArithmeticExpression     is the operator
 ;;                                          expression of that call.
 ;;    operands : ArithmeticExpressionList is the operand
 ;;                                          expression of that call.
-;;    type     : Type                     is the type of the call.
 
 ;; IMPLEMENTATION:
-(define-struct call-exp (operator operands type))
+(define-struct call-exp (operator operands))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-call-exp ArithmeticExpression ArithmeticExpressionList Type)
+;; (make-call-exp ArithmeticExpression ArithmeticExpressionList)
 
 ;; OBSERVER TEMPLATE:
 ;; call-fn: Call -> ?
 ;; (define (call-exp-fn c)
 ;;    (... (call-exp-operator c)
-;;         (call-exp-operands c)
-;;         (call-exp-type c))
+;;         (call-exp-operands c))
 
 ;; A Block is represented as a struct
-;; (make-block-exp var rhs body type)
+;; (make-block-exp var rhs body)
 ;;  with the following fields:
 ;; INTERP:
 ;;   var  : Variable             is the variable defined by that block.
@@ -246,21 +243,19 @@
 ;;                                  defined by that block.
 ;;   body : ArithmeticExpression is the expression whose value will become
 ;;                                  the value of the block expression.
-;;   type : Type                 is the type of the block.
 
 ;; IMPLEMENTATION:
-(define-struct block-exp (var rhs body type))
+(define-struct block-exp (var rhs body))
 
 ;; CONSTRUCTOR TEMPLATE:
-;; (make-block-exp Variable ArithmeticExpression ArithmeticExpression Type)
+;; (make-block-exp Variable ArithmeticExpression ArithmeticExpression)
 
 ;; OBSERVER TEMPLATE:
 ;; block-fn: Block -> ?
 ;; (define (block-exp-fn b)
 ;;    (... (block-exp-var b)
 ;;         (block-exp-rhs b)
-;;         (block-exp-body b)
-;;         (block-exp-type b))
+;;         (block-exp-body b))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -294,16 +289,16 @@
 ;; RETURNS: a variable whose name is the given string
 
 ;; EXAMPLE:
-;; (var "x15") => (make-variable `"x15" "TBD")
+;; (var "x15") => (make-variable `"x15" "Error")
 
 ;; TESTS:
 (begin-for-test
-  (check-equal? (var "y2") (make-variable "y2" "TBD")
+  (check-equal? (var "y2") (make-variable "y2" "Error")
      "(var y2) should return: A Variable with name y2"))
 
 ;; STRATEGY: Use Constructor Template for Variable.
 (define (var name)
-  (make-variable name TBD))
+  (make-variable name ERR))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; op : OperationName -> Operation
@@ -320,7 +315,7 @@
      "(op +) should return: an Operation with name +"))
 
 ;; STRATEGY: Use Observer Template for OperationName
-;;                thne use Constructor Template for Operation.
+;;                then use Constructor Template for Operation.
 (define (op name)
   (cond
     [(string=? name ADD) (make-operation name OP0)]
@@ -344,15 +339,14 @@
   (check-equal? (call (op "-") (list (lit 7) (lit 2.5)))
                 (make-call-exp (make-operation "-" "Op1")
                                (list (make-literal 7 "Int")
-                                     (make-literal 2.5 "Int"))
-                               "TBD")
+                                     (make-literal 2.5 "Int")))
      "(call (op -) (list (lit 7) (lit 2.5)))
            should return: A Call with operator as -
                     and operands as a list with 7 and 2.5"))
 
 ;; STRATEGY: Use Constructor Template for Call.
 (define (call operator operand)
-  (make-call-exp operator operand TBD))
+  (make-call-exp operator operand))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; call-operator : Call -> ArithmeticExpression
@@ -403,33 +397,9 @@
   (call-exp-operands exp))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
-;; call-type : Call -> Type
-;; GIVEN:   a call
-;; RETURNS: the type of that call
-
-;; EXAMPLE:
-;; (call-type (call (op "-")
-;;                  (list (lit 7) (lit 2.5))))
-;;         => "TBD"
-
-;; TESTS:
-(begin-for-test
-  (check-equal? (call-type (call (op "+")
-                                     (list (lit 10)
-                                           (lit 5.2))))
-                TBD
-     "(call-operands (call (op +)(list (lit 10) (lit 5.2))))
-          should return: TBD"))
-
-;; STRATEGY: Use Observer Template for Call
-;;                        on exp.
-(define (call-type exp)
-  (call-exp-type exp))
-
-;; CONTRACT & PURPOSE STATEMENTS:
 ;; call? : ArithmeticExpression -> Boolean
 ;; GIVEN:   an arithmetic expression
-;; RETURNS: true if and only the expression is a call.
+;; RETURNS: true iff the expression is a call.
 
 ;; EXAMPLE:
 ;; (call? (op "-"))                                 => #false
@@ -467,27 +437,25 @@
 ;;                                     (lit 5)
 ;;                                     (call (op "*")
 ;;                                           (list (var "x6")
-;;                                                 (var "x7")))
-;;                                     "TBD"))
+;;                                                 (var "x7")))))
 
 ;; TESTS:
 (begin-for-test
   (check-equal? (block (var "x")(lit 5)
                        (call (op "*")(list (var "10") (var "2"))))
-                (make-block-exp (make-variable "x" "TBD")
+                (make-block-exp (make-variable "x" "Error")
                                 (make-literal 5 "Int")
-                                (make-call-exp (make-operation "*" "Op0")
-                                               (list (make-variable "10" "TBD")
-                                                     (make-variable "2" "TBD"))
-                                               "TBD")
-                                "TBD")
-      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
+                                (make-call-exp
+                                 (make-operation "*" "Op0")
+                                 (list (make-variable "10" "Error")
+                                       (make-variable "2" "Error"))))
+     "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
           should return: A Block with var as x, rhs as 5
                      and a body with call with 10 and 2 multiplied"))
 
 ;; STRATEGY: Use Constructor Template for Block.
 (define (block var rhs body)
-  (make-block-exp var rhs body TBD))
+  (make-block-exp var rhs body))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; block-var : Block -> Variable
@@ -571,33 +539,6 @@
 ;;                        on b.
 (define (block-body b)
   (block-exp-body b))
-
-;; CONTRACT & PURPOSE STATEMENTS:
-;; block-type : Block -> Type
-;; GIVEN:   a block
-;; RETURNS: the type of the block.
-
-;; EXAMPLE:
-;; (block-type (block (var "x5")
-;;                    (lit 5)
-;;                    (call (op "*")
-;;                          (list (var "x6") (var "x7")))))
-;;         => "TBD"
-
-;; TESTS:
-(begin-for-test
-  (check-equal? (block-type (block (var "x")(lit 5)
-                                   (call (op "*")
-                                         (list (var "10")
-                                               (var "2")))))
-                TBD
-      "(block (var x)(lit 5)(call (op *)(list (var 10) (var 2))))
-          should return: TBD"))
-
-;; STRATEGY: Use Observer Template for Block
-;;                        on b.
-(define (block-type b)
-  (block-exp-type b))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; block? : ArithmeticExpression -> Boolean
@@ -874,21 +815,56 @@
 (define (undefined-variables ae)
   (remove-duplicates (undefined-variables-list ae empty)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(define EMPTY empty)
-;(define (is-error? aexp def-list)
-;  (cond
-;    [(variable? aexp)
-;     (if (member? aexp def-list))]))
+;; CONTRACT & PURPOSE STATEMENTS:
+;; contains? : Variable VariableList -> Boolean
+;; GIVEN:   a Variable v and a VariableList vlist
+;; WHERE:   vlist is the set of variables that have been defined
+;;            before the occurence of v.
+;; RETURNS: true iff there is a variable in vlist with same name as v.
 
-(define (well-typed? aexp)
-  empty)
+;; EXAMPLES:
+;; (contains? (var "x") (list (var "y")
+;;                            (make-variable "x" INT)))  => #true
+;; (contains? (var "x") (list (var "y")
+;;                            (make-variable "z" INT)))  => #false
 
+;; STRATEGY: Use HOF ormap on def-list.
 (define (contains? var def-list)
-  (ormap (lambda (v)(string=? (variable-name var)
-                              (variable-name v)))
-         def-list))
+  (ormap
+   ;; Variable -> Boolean
+   ;; GIVEN:   a Variable v.
+   ;; RETURNS: true iff v same name as var.
+   (lambda (v)(string=? (variable-name var)
+                        (variable-name v)))
+   def-list))
 
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-type-in-list : Variable VariableList -> Type
+;; GIVEN:   a Variable v and a VariableList vlist
+;; WHERE:   there exists a variable in vlist with the same name as v
+;;          vlist is the set of variables that have been defined
+;;            before the occurence of v.
+;; RETURNS: the type of the variable with name same as v.
+
+;; EXAMPLES:
+;; (get-type-in-list (var "x") (list (var "y")
+;;                                   (var "z")
+;;                                   (make-variable "x" OP1))) => "Op1"
+;; (get-type-in-list (var "x") (list (var "y")
+;;                                   (var "z")
+;;                                   (var "x"))                => "Error"
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (get-type-in-list (var "x")
+                                  (list (var "y")
+                                        (make-variable "x" OP1)))
+                OP1
+      "If variable x of type OP1 has been defined earlier
+          before the occurence of the use of variable x
+             then the type returned should be: OP1"))
+
+;; STRATEGY: Use Observer Template for VariableList on def-list.
 (define (get-type-in-list var def-list)
   (cond
     [(string=? (variable-name var)
@@ -896,28 +872,154 @@
      (variable-type (first def-list))]
     [else (get-type-in-list var (rest def-list))]))
 
-;(define (update-var-in-list var def-list typ)
-;  (cond
-;    [(empty? def-list)
-;     empty]
-;    [(string=? (variable-name var)
-;               (variable-name (first def-list)))
-;     (cons (make-variable (variable-name var) typ)
-;           (rest def-list))]
-;    []))
+;; CONTRACT & PURPOSE STATEMENTS:
+;; remove-var-in-list : Variable VariableList -> VariableList
+;; GIVEN:   a Variable v and a VariableList vlist
+;; WHERE:   there exists a variable in vlist with the same name as v
+;;          vlist is the set of variables that have been defined
+;;            before the occurence of v.
+;; RETURNS: the same list as given, without the variable with same name as v.
 
+;; EXAMPLES:
+;; (remove-var-in-list (var "x") (list (var "z")
+;;                                     (make-variable "x" OP1)
+;;                                     (var "p")))
+;;                         =>    (list (var "z")
+;;                                     (var "p"))
+
+;; STRATEGY: Use HOF filter on def-list.
+(define (remove-var-in-list var def-list)
+  (filter
+   ;; Variable -> Boolean
+   ;; GIVEN:   a Variable v.
+   ;; RETURNS: true iff v does not have same name as var.
+   (lambda (n)
+     (not (string=? (variable-name var)
+                    (variable-name n))))
+   def-list))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; update-list : Variable ArithmeticExpresion VariableList -> VariableList
+;; GIVEN:   a Variable v, expression aex and a VariableList vlist
+;; WHERE:   v is defined by some block b,
+;;          aex is the rhs of block b,
+;;          vlist is the set of variables that have been defined
+;;            before the occurence of block b.
+;; RETURNS: an updated list with either a new variable added or the type of
+;;             variable with same name as var changed to the type of aex.
+
+;; EXAMPLES:
+;; (update-list (var "x") (block (var "y")
+;;                               (op "-")
+;;                               (var "y"))
+;;              (list (var "y") (make-variable "x" INT)))
+;;                      => (list (make-variable "x" OP1) (var "y"))
+
+;; STRATEGY: Cases on if def-list has a variable with same name as var.
 (define (update-list var rhs def-list)
   (if (contains? var def-list)
       (list* (make-variable (variable-name var)
                             (get-type rhs def-list))
-             (filter (lambda (n)
-                       (not (string=? (variable-name var)
-                                      (variable-name n))))
-                     def-list))
+             (remove-var-in-list var def-list))
       (list* (make-variable (variable-name var)
                             (get-type rhs def-list))
              def-list)))
 
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-block-type : Block VariableList -> Type
+;; GIVEN:   a Block b and a VariableList vlist
+;; WHERE:   b is part of some expression aex and,
+;;          vlist is the set of variables that have been defined
+;;            before the occurence of block b.
+;; RETURNS: the type of the block b.
+
+;; EXAMPLES:
+;; (get-type (block (var "x")(lit 2)(lit 3)) EMPTY)    => "Int"
+;; (get-type (block (var "x")(op "+")(var "x")) EMPTY) => "Op0"
+
+;; STRATEGY: Cases on the type of the rhs of block b.
+(define (get-block-type b def-list)
+  (if (string=? (get-type (block-rhs b) def-list) ERR)
+         ERR
+         (get-type (block-body b)
+                   (update-list (block-var b)
+                                (block-rhs b)
+                                def-list))))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; all-operands-int? : ArithmeticExpressionList VariableList -> Boolean
+;; GIVEN:   an ArithmeticExpressionList alist
+;;             and a VariableList vlist
+;; WHERE:   alist is part of some larger expression ae
+;;          vlist is the set of variables that might be used within
+;;            the scope of alist.
+;; RETURNS: true iff every expresion in alist is of type "Int".
+
+;; EXAMPLES:
+;; (all-operands-int? (list (lit 2)
+;;                          (lit 4)
+;;                          (var "x")) empty) =>  #false
+;; (all-operands-int? (list (lit 2)
+;;                          (lit 4)) empty)   =>  #true
+ 
+;;STRATEGY: Use HOF andmap on op-list.
+(define (all-operands-int? op-list def-list)
+  (andmap
+   ;; ArithmeticExpression -> Boolean
+   ;; GIVEN:   an ArithmeticExpression exp.
+   ;; RETURNS: true iff exp is of type "Int".
+   (lambda (exp)
+     (string=? INT
+               (get-type exp def-list)))
+   op-list))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-call-type : Call VariableList -> Type
+;; GIVEN:   a Call c and a VariableList vlist
+;; WHERE:   c is part of some expression aex and,
+;;          vlist is the set of variables that have been defined
+;;            before the occurence of call c.
+;; RETURNS: the type of the call c.
+
+;; EXAMPLES:
+;; (get-call-type (call (block (var "x")
+;;                              (lit 2)
+;;                              (var "x"))
+;;                       (list (var "x"))) EMPTY)   => "Error"
+;; (get-call-type (call (op "-")
+;;                       (list (lit 2))) EMPTY)     => "Int"
+
+;; STRATEGY: Cases on the type of the operator of call c.
+(define (get-call-type c def-list)
+  (cond
+    [(string=? OP0 (get-type (call-operator c) def-list))
+     (if (all-operands-int? (call-operands c) def-list)
+         INT
+         ERR)]
+    [(string=? OP1 (get-type (call-operator c) def-list))
+     (if (and (all-operands-int? (call-operands c) def-list)
+              (not (empty? (call-operands c))))
+         INT
+         ERR)]
+    [else ERR]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-type : ArithmeticExpression VariableList -> Type
+;; GIVEN:   a ArithmeticExpression aexp and a VariableList vlist
+;; WHERE:   aexp is part of some expression aex and,
+;;          vlist is the set of variables that have been defined
+;;            before the occurence of expression aexp.
+;; RETURNS: the type of the expression aexp.
+
+;; EXAMPLES:
+;; (get-type (block (var "x")
+;;                   (var "y")
+;;                   (var "x"))
+;;            (list (var "z")
+;;                  (make-variable "y" INT)))  => "Int"
+;; (get-type (var "x") (list (var "x")))       => "Error"
+
+;; STRATEGY: Use Observer Template for ArithmeticExpression on aexp.
 (define (get-type aexp def-list)
   (cond
     [(literal? aexp)
@@ -929,27 +1031,109 @@
          (get-type-in-list aexp def-list)
          ERR)]
     [(block? aexp)
-     (if (string=? (get-type (block-rhs aexp) def-list) ERR)
-         ERR
-         (get-type (block-body aexp)
-                   (update-list (block-var aexp)
-                                (block-rhs aexp)
-                                def-list)))]
-   ; [(call? aexp)
-   ;  (get-call-type aexp def-list)]
-    ))
-
-(define (test-func aexp def-list)
-  (cond
-    [(variable? aexp)
-     (if (member? aexp def-list)
-         empty
-         (list (variable-name aexp)))]
+     (get-block-type aexp def-list)]
     [(call? aexp)
-     (append (undefined-variables-list (call-operator aexp)
-                                       def-list)
-             (undefined-variables-in-operands (call-operands aexp)
-                                              def-list))]
-    [(block? aexp)
-     (undefined-variables-in-block aexp def-list)]
-    [else empty]))
+     (get-call-type aexp def-list)]))
+
+;; well-typed? : ArithmeticExpression -> Boolean
+;; GIVEN: an arbitrary arithmetic expression
+;; RETURNS: true if and only if the expression is well-typed
+;; EXAMPLES:
+;; (well-typed? (lit 17))                   =>  true
+;; (well-typed? (var "x"))                  =>  false
+;;
+;; (well-typed?
+;;  (block (var "f")
+;;         (op "+")
+;;         (block (var "x")
+;;                (call (var "f") (list))
+;;                (call (op "*")
+;;                      (list (var "x"))))) => true
+;; (well-typed?
+;;  (block (var "f")
+;;         (op "+")
+;;         (block (var "f")
+;;                (call (var "f") (list))
+;;                (call (op "*")
+;;                      (list (var "f"))))) => true
+;;
+;; (well-typed?
+;;  (block (var "f")
+;;         (op "+")
+;;         (block (var "x")
+;;                (call (var "f") (list))
+;;                (call (op "*")
+;;                      (list (var "f"))))) => false
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (well-typed? (block (var "x")
+                                    (call (op "*")
+                                          (list (lit 3)))
+                                    (block (var "z")
+                                           (call (block (var "a")
+                                                        (lit 2)
+                                                        (lit 4))
+                                                 (list (lit 6)))
+                                           (call (op "-")
+                                                 (list (var "x")
+                                                       (var "z"))))))
+                #false
+      "Expression where two blocks define 2 variables, one of type Int
+          and other of type Error, both of which are used in the body
+            of the inner block should return: false")
+  (check-equal? (well-typed? (block (var "x")
+                                    (call (op "*")
+                                          (list (lit 3)))
+                                    (block (var "x")
+                                           (call (block (var "a")
+                                                        (lit 2)
+                                                        (lit 4))
+                                                 (list (lit 6)))
+                                           (call (op "-")
+                                                 (list)))))
+                #false
+      "Expression where the inner block has a call
+          with operator of type Op1 and an empty list of operands
+                    should return: false")
+  (check-equal? (well-typed? (call (op "*")
+                                   (list (block (var "a")
+                                                (lit 12)
+                                                (var "s")))))
+                #false
+      "Expression with a call having a block with a body of
+           type Error in list of operands should return: false")
+  (check-equal? (well-typed? (call (op "/")
+                                   empty))
+                #false
+      "Expression with a call having an Op1 operator
+           and empty list of operands should return: false")
+  (check-equal? (well-typed? (call (block (var "a")
+                                                (lit 12)
+                                                (op "/"))
+                                   (list (block (var "a")
+                                                (lit 12)
+                                                (block (var "x")
+                                                       (var "a")
+                                                       (var "x"))))))
+                #true
+      "Expression with a call having a block with a body of
+           type Op1 as operator and list of operands has
+              a block with inner most body of type Int
+                  should return: true")
+  (check-equal? (well-typed? (block (var "x")
+                                    (op "+")
+                                    (block (var "x")
+                                           (call (var "x")
+                                                 (list))
+                                           (call (op "/")
+                                                 (list (var "x"))))))
+                #true
+      "Expression with a block defining a variable of different types
+          at each level and at the end being used in the list of
+            operands with type Int should return: true"))
+
+;; STRATEGY: Initialise the invariant for get-type.
+(define (well-typed? aexp)
+  (not (string=? ERR
+                 (get-type aexp empty))))
