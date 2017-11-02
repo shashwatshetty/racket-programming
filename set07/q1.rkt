@@ -608,8 +608,10 @@
 
 ;; STRATEGY: Combine Simpler Functions.
 (define (is-var-defined? b v)
-  (and (not (var-in-sub-exp? (block-rhs b) (block-var b)))
-       (var-in-sub-exp? (block-body b) (block-var b))))
+  ;(and
+   (not (var-in-sub-exp? (block-rhs b) (block-var b)))
+       ;(var-in-sub-exp? (block-body b) (block-var b)))
+  )
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; undefined-variables-in-block : Block VariableList -> StringList
