@@ -111,7 +111,7 @@
 (begin-for-test
   (check-equal? (tie "C" "E")
                 (make-tie-result "C" "E")
-     "(tie C E) should return:
+                "(tie C E) should return:
              (make-tie-result C E)"))
 
 (define (tie comp1 comp2)
@@ -131,7 +131,7 @@
 (begin-for-test
   (check-equal? (defeated "C" "E")
                 (make-defeat-result "C" "E")
-     "(defeated C E) should return:
+                "(defeated C E) should return:
              (make-defeat-result C E)"))
 
 (define (defeated win lose)
@@ -233,14 +233,14 @@
                                          (defeated "A" "D")
                                          (tie "A" "C")))
                 #true
-       "Example with outcome list having an outcome of A
+                "Example with outcome list having an outcome of A
            defeating D should return: true")
   (check-equal? (defeated? "A" "D" (list (defeated "A" "B")
                                          (tie "B" "D")
                                          (defeated "A" "E")
                                          (tie "A" "C")))
                 #false
-       "Example with outcome list having an outcome of A
+                "Example with outcome list having an outcome of A
            defeating B, and B tieing with D
                 should return: false")
   (check-equal? (defeated? "D" "E" (list (defeated "A" "B")
@@ -248,7 +248,7 @@
                                          (defeated "A" "E")
                                          (tie "A" "C")))
                 #false
-       "Example with outcome list having no outcome of D
+                "Example with outcome list having no outcome of D
            defeating E should return: false"))
 
 ;; STRATEGY: Use HOF ormap on olist.
@@ -262,21 +262,166 @@
      (check-outcome c1 c2 o))
    olist))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-other-player : Competitor Tie -> String
+;; GIVEN:   a competitor c and a tie
+;; RETURNS: the name of the player other than c which has contested
+;;            in a game that has resulted in a tie.
+
+;; EXAMPLES:
+;; (get-other-player "A" (tie "B" "A")) => "B"
+;; (get-other-player "B" (tie "B" "D")) => "D"
+
+;; STRATEGY: Cases on if c is which player in the tie result.
+(define (get-other-player c outcome)
+  (if (string=? c (tie-result-player1 outcome))
+      (tie-result-player2 outcome)
+      (tie-result-player1 outcome)))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; add-to-list Competitor OutcomeList OutcomeList StringList
+;;                                     -> StringList
+;; GIVEN:   the name of a competitor c, 2 outcome lists
+;;             red-list and og-list and a list of strings clist
+;; WHERE:   c is the name of a competitor who has been outranked
+;;            by some other competitor present in clist.
+;;          red-list is a subset of og-list and 
+;;          clist is the list of the names of competitors that
+;;            have been checked for their outranks.
+;; RETURNS: a list of the competitors outranked by the given
+;;            competitor with repetitions in no order.
+
+;; EXAMPLES:
+
+;; STRATEGY: 
+(define (add-to-list outranked olist ilist checked)
+  (append (list outranked)
+          (outranks-list outranked
+                         olist
+                         ilist
+                         (list* outranked
+                                checked))))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; check-tie Competitor Tie OutcomeList StringList
+;;                                     -> StringList
+;; GIVEN:   the name of a competitor c, a tie t, outcome list og-list
+;;              and a list of strings clist
+;; RETURNS: the list of the competitors outranked by the given
+;;            competitor in the given tie along with those
+;;            outranked by the other player in the given tie,
+;;            with repetitions in no order.
+
+;; EXAMPLES:
+;; (check-tie "B" (tie "B" "C")
+;;                (list (defeated "A" "B")
+;;                      (tie "B" "C")
+;;                      (tie "C" "D"))
+;;                (list "A" "B"))             => (list "C" "B" "D" "C")
+;; (check-tie "C" (tie "C" "D")
+;;                (list (defeated "A" "B")
+;;                      (defeated "B" "C")
+;;                      (tie "C" "D"))
+;;                (list "A" "B" "C"))         => (list "D" "C")
+
+;; STRATEGY: Cases on if c is a winner.
+(define (check-tie c outcome ilist checked)
+  (if (in-tie? c outcome)
+      (if (member? (get-other-player c outcome)
+                   checked)
+          (list (get-other-player c outcome))
+          (add-to-list (get-other-player c outcome)
+                       ilist
+                       ilist checked))
+      empty))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; check-defeat Competitor Defeat OutcomeList StringList
+;;                                     -> StringList
+;; GIVEN:   the name of a competitor c, a defeat d, outcome list og-list
+;;              and a list of strings clist
+;; RETURNS: the list of the competitors outranked by the given
+;;            competitor in the given defeat along with those
+;;            outranked by the loser in the given defeat,
+;;            with repetitions in no order.
+
+;; EXAMPLES:
+;; (check-defeat "A" (defeated "A" "B")
+;;                (list (defeated "A" "B")
+;;                      (tie "B" "C")
+;;                      (tie "C" "D"))
+;;                (list "A"))              => (list "B" "C" "B" "D" "C")
+;; (check-defeat "C" (defeated "C" "D")
+;;               (list (defeated "A" "B")
+;;                     (defeated "B" "C")
+;;                     (defeated "C" "D"))
+;;               (list "A" "B" "C"))       => (list "D")
+
+;; STRATEGY: Cases on if c is a winner.
+(define (check-defeat c outcome ilist checked)
+  (if (is-winner? c outcome)
+      (if (member? (defeat-result-loser outcome)
+                   checked)
+          (list (defeat-result-loser outcome))
+          (add-to-list (defeat-result-loser outcome)
+                       ilist ilist checked))
+      empty))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; outrank-in-outcome : Competitor Outcome OutcomeList StringList
+;;                                      -> StringList
+;; GIVEN:   the name of a competitor c, an outcome o, outcome list og-list
+;;              and a list of strings clist
+;; RETURNS: the list of the competitors outranked by the given
+;;            competitor in the given outcome along with those
+;;            outranked by the other competitor in the given outcome
+;;            with repetitions in no order.
+;; EXAMPLES:
+;; (outrank-in-outcome "A" (defeated "A" "B")
+;;                     (list (defeated "A" "B")
+;;                          (tie "B" "C")
+;;                          (tie "C" "D"))
+;;                     (list "A"))            => (list "B" "C" "B" "D" "C")
+;; (outrank-in-outcome "C" (tie "C" "D")
+;;                     (list (defeated "A" "B")
+;;                           (tie "B" "C")
+;;                           (tie "C" "D"))
+;;                     (list "A" "B" "C"))    => (list "D" "C")
+
+;; STRATEGY: Use Observer Template for Outcome on outcome.
 (define (outrank-in-outcome c outcome ilist checked)
   (cond
     [(defeat-result? outcome)
-     (if (is-winner? c outcome)
-         (append (list (defeat-result-loser outcome))
-                 (outranks-list (defeat-result-loser outcome)
-                               ilist ilist (list* (defeat-result-loser outcome)
-                                                  checked)))
-         empty)]
+     (check-defeat c outcome ilist checked)]
     [(tie-result? outcome)
-     (if (in-tie? c outcome)
-         (append (get-other-player c outcome)
-                 ))]))
+     (check-tie c outcome ilist checked)]))
 
+;; CONTRACT & PURPOSE STATEMENTS:
+;; outranks-list : Competitor OutcomeList OutComeList StringList
+;;                                 -> StringList
+;; GIVEN:   the name of a competitor c, 2 outcome lists
+;;             red-list and og-list and a list of strings clist
+;; WHERE:   red-list is a subset of og-list and 
+;;          clist is the list of the names of competitors that
+;;            have been checked for their outranks.
+;; RETURNS: a list of the competitors outranked by the given
+;;            competitor with repetitions in no order.
+;;                  
+;; EXAMPLES:
+;; (outranks-list "A" (list (defeated "A" "B")
+;;                          (tie "C" "D"))
+;;                (list (defeated "A" "B")
+;;                      (tie "C" "D"))
+;;                (list "A"))                  => (list "B")
+;; (outranks-list "A" (list (defeated "A" "B")
+;;                          (tie "B" "C")
+;;                          (tie "C" "D"))
+;;                (list (defeated "A" "B")
+;;                      (tie "B" "C")
+;;                      (tie "C" "D"))
+;;                (list "A"))                  => (list "B" "C" "B" "D" "C")
+
+;; STRATEGY: Use Observer Template for OutcomeList on olist.
 (define (outranks-list c olist ilist checked)
   (cond
     [(empty? olist)
@@ -285,11 +430,29 @@
                   (outranks-list c (rest olist) ilist checked))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
+;; remove-duplicates : StringList -> StringList
+;; GIVEN:   a StringList
+;; RETURNS: the same StringList without any duplicate elements.
+
+;; EXAMPLES:
+;; (remove-duplicates (list "x" "x" "y")) => (list "x" "y")
+
+;; STRATEGY: Use Observer Template for StringList on alist.
+(define (remove-duplicates alist)
+  (cond
+    [(empty? alist)
+     empty]
+    [(member? (first alist) (rest alist))
+     (remove-duplicates (rest alist))]
+    [else
+     (list* (first alist) (remove-duplicates (rest alist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
 ;; outranks : Competitor OutcomeList -> CompetitorList
 ;; GIVEN:   the name of a competitor and a list of outcomes
 ;; RETURNS: a list of the competitors outranked by the given
-;;            competitor, in alphabetical order
-;; NOTE: it is possible for a competitor to outrank itself
+;;            competitor, in alphabetical order.
+;; NOTE: it is possible for a competitor to outrank itself.
 
 ;; EXAMPLES:
 ;; (outranks "A" (list (defeated "A" "B") (tie "B" "C")))
@@ -299,8 +462,138 @@
 ;; (outranks "C" (list (defeated "A" "B") (tie "B" "C")))
 ;;                          => (list "B" "C")
 
+;; STRATEGY: Combine Simpler Functions.
 (define (outranks c olist)
-  (empty))
+  (sort (remove-duplicates (outranks-list c olist olist (list c)))
+        string<?))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (outranks "A" (list (defeated "A" "B")
+                                    (tie "D" "E")
+                                    (defeated "B" "C")
+                                    (tie "D" "C")))
+                (list "B" "C" "D" "E")
+                "A outranks 4 competitors from B to E")
+  (check-equal? (outranks "D" (list (defeated "A" "B")
+                                    (defeated "B" "C")
+                                    (defeated "C" "D")
+                                    (defeated "D" "A")))
+                (list "A" "B" "C" "D")
+                "D outranks 4 competitors from A to D"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (add-to-list-by outranked olist ilist checked)
+  (append (list outranked)
+          (outranked-by-list outranked
+                             olist
+                             ilist
+                             (list* outranked
+                                    checked))))
+
+(define (check-tie-by c outcome ilist checked)
+  (if (in-tie? c outcome)
+      (if (member? (get-other-player c outcome)
+                   checked)
+          (list (get-other-player c outcome))
+          (add-to-list-by (get-other-player c outcome)
+                          ilist
+                          ilist checked))
+      empty))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; check-defeat-by Competitor Defeat OutcomeList StringList
+;;                                     -> StringList
+;; GIVEN:   the name of a competitor c, a defeat d, outcome list og-list
+;;              and a list of strings clist
+;; RETURNS: the list of the competitors that outrank the given
+;;            competitor in the given defeat along with those
+;;            that outrank the winner in the given defeat,
+;;            with repetitions in no order.
+
+;; EXAMPLES:
+;; (check-defeat-by "A" (defeated "A" "B")
+;;                (list (defeated "A" "B")
+;;                      (tie "B" "C")
+;;                      (tie "C" "D"))
+;;                (list "A"))              => (list "B" "C" "B" "D" "C")
+;; (check-defeat-by "D" (defeated "C" "D")
+;;                   (list (defeated "A" "B")
+;;                         (defeated "B" "C")
+;;                         (defeated "C" "D"))
+;;                   (list "D"))       => (list "C" "B" "A")
+
+;; STRATEGY: Cases on if c is a loser.
+(define (check-defeat-by c outcome ilist checked)
+  (if (is-loser? c outcome)
+      (if (member? (defeat-result-winner outcome)
+                   checked)
+          (list (defeat-result-winner outcome))
+          (add-to-list-by (defeat-result-winner outcome)
+                          ilist ilist checked))
+      empty))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; outranked-by-in-outcome : Competitor Outcome OutcomeList StringList
+;;                                      -> StringList
+;; GIVEN:   the name of a competitor c, an outcome o, outcome list og-list
+;;              and a list of strings clist
+;; RETURNS: the list of the competitors that outrank the given
+;;            competitor in the given outcome along with those
+;;            that  outranks the other competitor in the given outcome 
+;;            with repetitions in no order.
+;; EXAMPLES:
+;; (outranked-by-in-outcome "A" (defeated "A" "B")
+;;                          (list (defeated "A" "B")
+;;                                (tie "B" "C")
+;;                                (tie "C" "D"))
+;;                          (list "A"))            => (list)
+;; (outranked-by-in-outcome "B" (defeated "A" "B")
+;;                           (list (defeated "A" "B")
+;;                                 (defeated "C" "A")
+;;                                 (tie "C" "D"))
+;;                           (list "B"))    => (list "A" "C" "D" "C")
+
+;; STRATEGY: Use Observer Template for Outcome on outcome.
+(define (outranked-by-in-outcome c outcome ilist checked)
+  (cond
+    [(defeat-result? outcome)
+     (check-defeat-by c outcome ilist checked)]
+    [(tie-result? outcome)
+     (check-tie-by c outcome ilist checked)]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; outranked-by-list : Competitor OutcomeList OutComeList StringList
+;;                                 -> StringList
+;; GIVEN:   the name of a competitor c, 2 outcome lists
+;;             red-list and og-list and a list of strings clist
+;; WHERE:   red-list is a subset of og-list and 
+;;          clist is the list of the names of competitors that
+;;            have been checked for their outranked-by.
+;; RETURNS: a list of the competitors that outranks the given
+;;            competitor, with repetitions in no order.
+;;                  
+;; EXAMPLES:
+;; (outranked-by-list "A" (list (defeated "A" "B")
+;;                              (tie "C" "D"))
+;;                    (list (defeated "A" "B")
+;;                          (tie "C" "D"))
+;;                    (list "A"))            => (list)
+;; (outranked-by-list "C" (list (defeated "A" "B")
+;;                              (tie "B" "C")
+;;                              (tie "C" "D"))
+;;                    (list (defeated "A" "B")
+;;                          (tie "B" "C")
+;;                          (tie "C" "D"))
+;;                    (list "A"))            => (list "B" "A" "C" "D" "C")
+
+;; STRATEGY: Use Observer Template for OutcomeList on olist.
+(define (outranked-by-list c olist ilist checked)
+  (cond
+    [(empty? olist)
+     empty]
+    [else (append (outranked-by-in-outcome c (first olist) ilist checked)
+                  (outranked-by-list c (rest olist) ilist checked))]))
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; outranked-by : Competitor OutcomeList -> CompetitorList
