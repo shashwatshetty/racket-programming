@@ -169,6 +169,8 @@
 ;; RETURNS: true iff the competitor is part of the tie result.
 
 ;; EXAMPLES:
+;; (in-tie? "A" (tie "A" "B")) => #true
+;; (in-tie? "C" (tie "A" "B")) => #false
 
 ;;STRATEGY: Use Observer Template for Tie on tie-res.
 (define (in-tie? c tie-res)
@@ -182,7 +184,9 @@
 ;;             the first competitor has defeated or tied the second.
 
 ;; EXAMPLES:
-
+;; (check-outcome "A" "B" (defeated "A" "B")) => #true
+;; (check-outcome "A" "B" (defeated "B" "A")) => #false
+;; (check-outcome "A" "B" (tie "A" "B")) => #true
 
 ;; STRATEGY: Use Observer Template for Outcome.
 (define (check-outcome c1 c2 outcome)
@@ -201,6 +205,8 @@
 ;;              which has resulted in a tie.
 
 ;; EXAMPLES:
+;; (are-tied? "A" "B" (tie "A" "B")) => #true
+;; (are-tied? "A" "B" (tie "A" "C")) => #false
 
 ;; STRATEGY: Combine Simpler Functions.
 (define (are-tied? c1 c2 tie-res)
@@ -292,6 +298,12 @@
 ;;            competitor with repetitions in no order.
 
 ;; EXAMPLES:
+;; (add-to-list "B" (list (tie "B" "C")
+;;                        (tie "C" "D"))
+;;              (list (defeated "A" "B")
+;;                    (tie "B" "C")
+;;                    (tie "C" "D"))
+;;              (list "A"))     => (list "B" "C" "B" "D" "C")
 
 ;; STRATEGY: Combine Simpler Functions.
 (define (add-to-list outranked olist ilist checked)

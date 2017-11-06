@@ -189,6 +189,8 @@
 ;; RETURNS: true iff the competitor is part of the tie result.
 
 ;; EXAMPLES:
+;; (in-tie? "A" (tie "A" "B")) => #true
+;; (in-tie? "C" (tie "A" "B")) => #false
 
 ;;STRATEGY: Use Observer Template for Tie on tie-res.
 (define (in-tie? c tie-res)
@@ -202,7 +204,9 @@
 ;;             the first competitor has defeated or tied the second.
 
 ;; EXAMPLES:
-
+;; (check-outcome "A" "B" (defeated "A" "B")) => #true
+;; (check-outcome "A" "B" (defeated "B" "A")) => #false
+;; (check-outcome "A" "B" (tie "A" "B")) => #true
 
 ;; STRATEGY: Use Observer Template for Outcome.
 (define (check-outcome c1 c2 outcome)
@@ -221,6 +225,8 @@
 ;;              which has resulted in a tie.
 
 ;; EXAMPLES:
+;; (are-tied? "A" "B" (tie "A" "B")) => #true
+;; (are-tied? "A" "B" (tie "A" "C")) => #false
 
 ;; STRATEGY: Combine Simpler Functions.
 (define (are-tied? c1 c2 tie-res)
@@ -312,6 +318,12 @@
 ;;            competitor with repetitions in no order.
 
 ;; EXAMPLES:
+;; (add-to-list "B" (list (tie "B" "C")
+;;                        (tie "C" "D"))
+;;              (list (defeated "A" "B")
+;;                    (tie "B" "C")
+;;                    (tie "C" "D"))
+;;              (list "A"))     => (list "B" "C" "B" "D" "C")
 
 ;; STRATEGY: Combine Simpler Functions.
 (define (add-to-list outranked olist ilist checked)
@@ -426,7 +438,9 @@
 ;;            have been checked for their outranks.
 ;; RETURNS: a list of the competitors outranked by the given
 ;;            competitor with repetitions in no order.
-;;                  
+
+;; HALTING MEASURE: length of red-list.
+
 ;; EXAMPLES:
 ;; (outranks-list "A" (list (defeated "A" "B")
 ;;                          (tie "C" "D"))
@@ -441,6 +455,7 @@
 ;;                      (tie "C" "D"))
 ;;                (list "A"))                  => (list "B" "C" "B" "D" "C")
 
+
 ;; STRATEGY: Use Observer Template for OutcomeList on olist.
 (define (outranks-list c olist ilist checked)
   (cond
@@ -451,8 +466,10 @@
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; remove-duplicates : StringList -> StringList
-;; GIVEN:   a StringList
+;; GIVEN:   a StringList slist
 ;; RETURNS: the same StringList without any duplicate elements.
+
+;; HALTING MEASURE: length of slist.
 
 ;; EXAMPLES:
 ;; (remove-duplicates (list "x" "x" "y")) => (list "x" "y")
@@ -644,7 +661,9 @@
 ;;            have been checked for their outranked-by.
 ;; RETURNS: a list of the competitors that outranks the given
 ;;            competitor, with repetitions in no order.
-;;                  
+
+;; HALTING MEASURE: length of red-list.
+                  
 ;; EXAMPLES:
 ;; (outranked-by-list "A" (list (defeated "A" "B")
 ;;                              (tie "C" "D"))
@@ -723,9 +742,11 @@
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; get-victory-count : Competitor OutcomeList -> NonNegInt
-;; GIVEN:   the name of a competitor and a list of outcomes
+;; GIVEN:   the name of a competitor and a list of outcomes olist
 ;; RETURNS: the number of outcomes the given competitor has
 ;;             won or tied with another competitor.
+
+;; HALTING MEASURE: length of olist.
 
 ;; EXAMPLES:
 ;; (get-victory-count "A" (list (defeated "A" "D")
@@ -774,9 +795,11 @@
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; get-total-count : Competitor OutcomeList -> NonNegInt
-;; GIVEN:   the name of a competitor and a list of outcomes
+;; GIVEN:   the name of a competitor and a list of outcomes olist
 ;; RETURNS: the number of outcomes the given competitor has
 ;;             participated.
+
+;; HALTING MEASURE: length of olist.
 
 ;; EXAMPLES:
 ;; (get-total-count "A" (list (defeated "A" "D")
@@ -845,10 +868,12 @@
 
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; get-all-competitors : OutcomeList -> StringList
-;; GIVEN:   a list of outcomes
+;; GIVEN:   a list of outcomes olist
 ;; RETURNS: the list of the names of all competitors that participate
 ;;            in at least one of the outcomes in the given list
 ;;            without any repetitions.
+
+;; HALTING MEASURE: length of olist.
 
 ;; EXAMPLES:
 ;; (get-all-competitors (list (defeated "A" "D")
