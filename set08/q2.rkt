@@ -1,9 +1,9 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname q1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname q2) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require rackunit)
 (require "extras.rkt")
-(check-location "08" "q1.rkt")
+(check-location "08" "q2.rkt")
 
 (provide tie
          defeated
@@ -677,3 +677,278 @@
       "E outranks everyone but is outranked by D
          who is outranked by everyone in turn
       should return all the competitors from A to E"))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; count-in-outcome : Competitor Outcome -> NonNegInt
+;; GIVEN:   the name of a competitor and an outcome
+;; RETURNS: 1 if the given competitor has won or tied in the
+;;             given outcome otherwise 0.
+
+;; EXAMPLES:
+;; (count-in-outcome "A" (defeated "A" "D")) => 1
+;; (count-in-outcome "A" (tie "S" "F"))      => 0
+;; (count-in-outcome "C" (defeated "C" "D")) => 1
+
+;; STRATEGY: Use Observer Template for Outcome on outcome.
+(define (count-in-outcome c outcome)
+  (cond
+    [(defeat-result? outcome)
+     (if (is-winner? c outcome)
+         1
+         0)]
+    [(tie-result? outcome)
+     (if (in-tie? c outcome)
+         1
+         0)]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-victory-count : Competitor OutcomeList -> NonNegInt
+;; GIVEN:   the name of a competitor and a list of outcomes
+;; RETURNS: the number of outcomes the given competitor has
+;;             won or tied with another competitor.
+
+;; EXAMPLES:
+;; (get-victory-count "A" (list (defeated "A" "D")
+;;                              (defeated "A" "E")
+;;                              (defeated "C" "B")
+;;                              (defeated "C" "F")
+;;                              (tie "D" "B")
+;;                              (defeated "F" "E"))) => 2
+;; (get-victory-count "D" (list (defeated "A" "D")
+;;                              (defeated "A" "E")
+;;                              (defeated "C" "B")
+;;                              (defeated "C" "F")
+;;                              (tie "D" "B")
+;;                              (defeated "F" "E"))) => 1
+
+;; STRATEGY: Use Observer Template for OutcomeList on olist.
+(define (get-victory-count c olist)
+  (cond
+    [(empty? olist) 0]
+    [else (+ (count-in-outcome c (first olist))
+             (get-victory-count c (rest olist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; total-count-in-outcome : Competitor Outcome -> NonNegInt
+;; GIVEN:   the name of a competitor and an outcome
+;; RETURNS: 1 if the given competitor has participated in the
+;;             given outcome otherwise 0.
+
+;; EXAMPLES:
+;; (total-count-in-outcome "A" (defeated "A" "D")) => 1
+;; (total-count-in-outcome "A" (tie "S" "A"))      => 1
+;; (total-count-in-outcome "A" (defeated "C" "D")) => 0
+
+;; STRATEGY: Use Observer Template for Outcome on outcome.
+(define (total-count-in-outcome c outcome)
+  (cond
+    [(defeat-result? outcome)
+     (if (or (is-winner? c outcome)
+             (is-loser? c outcome))
+         1
+         0)]
+    [(tie-result? outcome)
+     (if (in-tie? c outcome)
+         1
+         0)]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-total-count : Competitor OutcomeList -> NonNegInt
+;; GIVEN:   the name of a competitor and a list of outcomes
+;; RETURNS: the number of outcomes the given competitor has
+;;             participated.
+
+;; EXAMPLES:
+;; (get-total-count "A" (list (defeated "A" "D")
+;;                             (defeated "A" "E")
+;;                             (defeated "C" "B")
+;;                             (defeated "C" "F")
+;;                             (tie "D" "B")
+;;                             (defeated "F" "E"))) => 2
+;; (get-total-count "A" (list (defeated "A" "D")
+;;                             (defeated "C" "B")
+;;                             (defeated "C" "F")
+;;                             (tie "D" "B")
+;;                             (defeated "F" "E"))) => 1
+
+;; STRATEGY: Use Observer Template for OutcomeList on olist.
+(define (get-total-count c olist)
+  (cond
+    [(empty? olist) 0]
+    [else (+ (total-count-in-outcome c (first olist))
+             (get-total-count c (rest olist)))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-non-losing-percent : Competitor OutcomeList -> NonNegInt
+;; GIVEN:   the name of a competitor and a list of outcomes
+;; RETURNS: the non-losing percentage of that competitor.
+
+;; EXAMPLES:
+;; (get-non-losing-percent "A" (list (defeated "A" "D")
+;;                                    (defeated "A" "E")
+;;                                    (defeated "C" "B")
+;;                                    (defeated "C" "F")
+;;                                    (tie "D" "B")
+;;                                    (defeated "F" "E"))) => 100
+;; (get-non-losing-percent "E" (list (defeated "A" "D")
+;;                                    (defeated "A" "E")
+;;                                    (defeated "C" "B")
+;;                                    (defeated "C" "F")
+;;                                    (tie "D" "B")
+;;                                    (defeated "F" "E"))) => 0
+
+;; STRATEGY: Transcribe Formula.
+(define (get-non-losing-percent c olist)
+  (* (/ (get-victory-count c olist)
+        (get-total-count c olist))
+     100))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-competitor-in-outcome : Outcome -> StringList
+;; GIVEN:   an outcome
+;; RETURNS: the list of the names of the competitors
+;;            involved in that outcome.
+
+;; EXAMPLES:
+;; (get-competitor-in-outcome (defeated "A" "B")) => (list "A" "B")
+;; (get-competitor-in-outcome (tie "D" "R"))      => (list "D" "R")
+
+;; STRATEGY: Use Observer Template for Outcome on outcome.
+(define (get-competitor-in-outcome outcome)
+  (cond
+    [(defeat-result? outcome)
+     (list (defeat-result-winner outcome)
+           (defeat-result-loser outcome))]
+    [(tie-result? outcome)
+     (list (tie-result-player1 outcome)
+           (tie-result-player2 outcome))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; get-all-competitors : OutcomeList -> StringList
+;; GIVEN:   a list of outcomes
+;; RETURNS: the list of the names of all competitors that participate
+;;            in at least one of the outcomes in the given list
+;;            without any repetitions.
+
+;; EXAMPLES:
+;; (get-all-competitors (list (defeated "A" "D")
+;;                             (defeated "A" "E")
+;;                             (defeated "C" "B")
+;;                             (defeated "C" "F")
+;;                             (tie "D" "B")
+;;                             (defeated "F" "E")))
+;;                               => (list "A" "B" "C" "D" "F" "E")
+
+;; STRATEGY: Use observer Template for OutcomeList on olist.
+(define (get-all-competitors olist)
+  (cond
+    [(empty? olist) empty]
+    [else (remove-duplicates (append (get-competitor-in-outcome (first olist))
+                                     (get-all-competitors (rest olist))))]))
+
+;; CONTRACT & PURPOSE STATEMENTS:
+;; power-rank-sort : Competitor Competitor OutcomeList -> Boolean
+;; GIVEN:   the names of two competitors c1 and c2, list of
+;;             outcomes olist
+;; RETURNS: true iff c1 has a higher power ranking than c2.
+
+;; EXAMPLES:
+;; (power-rank-sort "A" "F" (list (defeated "A" "D")
+;;                                 (defeated "A" "E")
+;;                                 (defeated "C" "B")
+;;                                 (defeated "C" "F")
+;;                                 (tie "D" "B")
+;;                                 (defeated "F" "E")))  => #true
+;; (power-rank-sort "A" "F" (list (defeated "A" "D")
+;;                                 (defeated "A" "E")
+;;                                 (defeated "C" "B")
+;;                                 (defeated "C" "F")
+;;                                 (tie "D" "B")
+;;                                 (defeated "F" "E")))  => #false
+
+;; STRATEGY: Cases on the number of competitors outranked, outranked by,
+;;              and non-losing percentage for c1 and c2
+(define (power-rank-sort c1 c2 olist)
+  (cond
+    [(< (length (outranked-by c1 olist))
+        (length (outranked-by c2 olist)))
+     #true]
+    [(> (length (outranked-by c1 olist))
+        (length (outranked-by c2 olist)))
+     #false]
+    [(> (length (outranks c1 olist))
+        (length (outranks c2 olist)))
+     #true]
+    [(< (length (outranks c1 olist))
+        (length (outranks c2 olist)))
+     #false]
+    [(> (get-non-losing-percent c1 olist)
+        (get-non-losing-percent c2 olist))
+     #true]
+    [(< (get-non-losing-percent c1 olist)
+        (get-non-losing-percent c2 olist))
+     #false]
+    [else
+     (string<? c1 c2)]))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (power-rank-sort "Z" "W" (list (tie "Z" "X")
+                                               (defeated "Z" "W")))
+                #true
+    "X   ; outranked by 2, outranks 3, 100%, X string<? Z
+     Z   ; outranked by 2, outranks 3, 100%
+     W   ; outranked by 2, outranks 0"))
+
+;; power-ranking : OutcomeList -> CompetitorList
+;; GIVEN:   a list of outcomes
+;; RETURNS: a list of all competitors mentioned by one or more
+;;           of the outcomes, without repetitions, with competitor A
+;;           coming before competitor B in the list if and only if
+;;           the power-ranking of A is higher than the power ranking
+;;           of B.
+
+;; EXAMPLE:
+;; (power-ranking
+;;  (list (defeated "A" "D")
+;;        (defeated "A" "E")
+;;        (defeated "C" "B")
+;;        (defeated "C" "F")
+;;        (tie "D" "B")
+;;        (defeated "F" "E")))
+;;             => (list "C"   ; outranked by 0, outranks 4
+;;                      "A"   ; outranked by 0, outranks 3
+;;                      "F"   ; outranked by 1
+;;                      "E"   ; outranked by 3
+;;                      "B"   ; outranked by 4, outranks 12, 50%
+;;                      "D")  ; outranked by 4, outranks 12, 50%
+
+;; STRATEGY: Use HOF sort on the result obtained from
+;;              get-all-competitors.
+(define (power-ranking olist)
+  (sort (get-all-competitors olist)
+        (lambda (m n)
+          (power-rank-sort m n olist))))
+
+;; TESTS:
+(begin-for-test
+  (check-equal? (power-ranking (list (defeated "Z" "A")
+                                     (defeated "A" "B")
+                                     (defeated "B" "Z")
+                                     (tie "Z" "C")
+                                     (tie "C" "D")
+                                     (defeated "E" "Z")
+                                     (defeated "E" "D")))
+                (list "E" "C" "A" "B" "D" "Z")
+    "E   ; outranked by 0, outranks 5
+     C   ; outranked by 6, outranks 5, 100%
+     A   ; outranked by 6, outranks 5, 50%, A string<? B
+     B   ; outranked by 6, outranks 5, 50%, B string<? D
+     D   ; outranked by 6, outranks 5, 50%, D string<? Z
+     Z   ; outranked by 6, outranks 5, 50%")
+  (check-equal? (power-ranking (list (tie "Z" "X")
+                                     (defeated "Z" "W")))
+                (list "X" "Z" "W")
+    "X   ; outranked by 2, outranks 3, 100%, X string<? Z
+     Z   ; outranked by 2, outranks 3, 100%
+     W   ; outranked by 2, outranks 0"))
