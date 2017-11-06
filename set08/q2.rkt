@@ -9,7 +9,8 @@
          defeated
          defeated?
          outranks
-         outranked-by)
+         outranked-by
+         poer-ranking)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
