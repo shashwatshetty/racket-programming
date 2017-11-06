@@ -93,6 +93,25 @@
 ;;    (... (defeat-result-winner d)
 ;;         (defeat-result-loser d))
 
+;; A sequence of Strings (StringList)
+;;           is represented as a list of a Strings.
+
+;; CONSTRUCTOR TEMPLATES:
+;; empty             -- the empty sequence
+;; (cons s seq)
+;;   WHERE:
+;;    s    : String     is the first String in the sequence.
+;;    seq  : StringList is the the rest of the sequence.
+
+;; OBSERVER TEMPLATE:
+;; stl-fn : StringList -> ??
+#;
+(define (stl-fn a)
+  (cond
+    [(empty? a) ...]
+    [else (... (first a)
+               (stl-fn (rest a)))]))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS:
@@ -640,7 +659,7 @@
 ;;                          (tie "C" "D"))
 ;;                    (list "A"))            => (list "B" "A" "C" "D" "C")
 
-;; STRATEGY: Use Observer Template for OutcomeList on olist.
+;; STRATEGY: Use Observer Template for OutcomeList on ilist.
 (define (outranked-by-list c olist ilist checked)
   (cond
     [(empty? olist)
@@ -928,6 +947,9 @@
 ;;              get-all-competitors.
 (define (power-ranking olist)
   (sort (get-all-competitors olist)
+        ;; Competitor Competitor -> Boolean
+        ;; GIVEN:   two competitors c1 and c2.
+        ;; RETURNS: true iff c1 has a higher power ranking than c2.
         (lambda (m n)
           (power-rank-sort m n olist))))
 
