@@ -13,8 +13,8 @@ public class Defeat1 implements Outcome {
     Defeat1 (Competitor c1, Competitor c2) {
 
         // Your code goes here.
-		this.c1 = c1
-		this.c2 = c2
+		this.c1 = c1;
+		this.c2 = c2;
 
     }
 
@@ -23,7 +23,7 @@ public class Defeat1 implements Outcome {
     public boolean isTie () {
 
         // Your code goes here.
-		return false
+		return false;
 
     }
 
@@ -32,7 +32,7 @@ public class Defeat1 implements Outcome {
     public Competitor first () {
 
         // Your code goes here.
-		return this.winner()
+		return this.winner();
 
     }
 
@@ -41,7 +41,7 @@ public class Defeat1 implements Outcome {
     public Competitor second () {
 
         // Your code goes here.
-		return this.loser()
+		return this.loser();
 
     }
 
@@ -52,7 +52,7 @@ public class Defeat1 implements Outcome {
     public Competitor winner () {
 
         // Your code goes here.
-		return this.c1
+		return this.c1;
 
     }
 
@@ -63,7 +63,7 @@ public class Defeat1 implements Outcome {
     public Competitor loser () {
 
         // Your code goes here.
-		return this.c2
+		return this.c2;
 
     }
 }
