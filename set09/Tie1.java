@@ -50,7 +50,7 @@ public class Tie1 implements Outcome {
     public Competitor winner () {
 
         // Your code goes here.
-		return null;
+    	throw new UnsupportedOperationException();
     }
 
     // GIVEN: no arguments
@@ -60,6 +60,6 @@ public class Tie1 implements Outcome {
     public Competitor loser () {
 
         // Your code goes here.
-    	return null;
+    	throw new UnsupportedOperationException();
     }
 }

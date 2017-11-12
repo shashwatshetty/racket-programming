@@ -62,8 +62,14 @@ class Competitor1 implements Competitor {
     public List<String> outranks (List<Outcome> outcomes) {
 
         // Your code should replace the line below.
-
-        throw new UnsupportedOperationException();
+    	List<String> checked = new ArrayList<String>();
+		checked.add(this.name());
+		Set<String> outrankSet = outranksSet(this, outcomes, checked);
+		List <String> outranks = new ArrayList<String>();
+		outranks.addAll(outrankSet);
+		Collections.sort(outranks);
+		return outranks;
+        //throw new UnsupportedOperationException();
 
     }
 
@@ -75,8 +81,14 @@ class Competitor1 implements Competitor {
     public List<String> outrankedBy (List<Outcome> outcomes) {
 
         // Your code should replace the line below.
-
-        throw new UnsupportedOperationException();
+    	List<String> checked = new ArrayList<String>();
+		checked.add(this.name());
+		Set<String> outrankedBySet = outrankedBySet(this, outcomes, checked);
+		List <String> outrankedBy = new ArrayList<String>();
+		outrankedBy.addAll(outrankedBySet);
+		Collections.sort(outrankedBy);
+		return outrankedBy;
+        //throw new UnsupportedOperationException();
 
     }
 
@@ -93,6 +105,95 @@ class Competitor1 implements Competitor {
 
         throw new UnsupportedOperationException();
 
+    }
+    
+    /*************************
+    ****  HELPER METHODS  ****
+    *************************/
+    public Set<String> outranksSet(Competitor c, List<Outcome> outcomes, List<String> checked){
+    	Iterator<Outcome> iter = outcomes.listIterator();
+    	Set<String> outranks = new HashSet<String>();
+    	while(iter.hasNext()){
+    		Outcome outcome = iter.next();
+    		if (outcome.isTie()){
+    			if (inTie(c, outcome)){
+    				Competitor other = getOtherPlayer(c, outcome);
+    				if (checked.contains(other.name())){
+    					outranks.add(other.name());
+    				}
+    				else{
+    					outranks.add(other.name());
+    					checked.add(other.name());
+        				Set <String> otherOutranks = outranksSet(other, outcomes, checked);
+        				outranks.addAll(otherOutranks);
+    				}
+    			}
+    		}
+    		else{
+    			if(isWinner(c, outcome)){
+    				Competitor other = outcome.loser();
+    				if (checked.contains(other.name())){
+    					outranks.add(other.name());
+    				}
+    				else{
+    					outranks.add(other.name());
+    					checked.add(other.name());
+        				Set <String> otherOutranks = outranksSet(other, outcomes, checked);
+        				outranks.addAll(otherOutranks);
+    				}
+    			}
+    		}
+    	}
+    	return outranks;
+    }
+    
+    public Set<String> outrankedBySet(Competitor c, List<Outcome> outcomes, List<String> checked){
+    	Iterator<Outcome> iter = outcomes.listIterator();
+    	Set<String> outrankedBy = new HashSet<String>();
+    	while(iter.hasNext()){
+    		Outcome outcome = iter.next();
+    		if (outcome.isTie()){
+    			if (inTie(c, outcome)){
+    				Competitor other = getOtherPlayer(c, outcome);
+    				if (checked.contains(other.name())){
+    					outrankedBy.add(other.name());
+    				}
+    				else{
+    					outrankedBy.add(other.name());
+    					checked.add(other.name());
+        				Set <String> otherOutranks = 
+        						outrankedBySet(other, outcomes, checked);
+        				outrankedBy.addAll(otherOutranks);
+    				}
+    			}
+    		}
+    		else{
+    			if(isLoser(c, outcome)){
+    				Competitor other = outcome.winner();
+    				if (checked.contains(other.name())){
+    					outrankedBy.add(other.name());
+    				}
+    				else{
+    					outrankedBy.add(other.name());
+    					checked.add(other.name());
+        				Set <String> otherOutranks = 
+        						outrankedBySet(other, outcomes, checked);
+        				outrankedBy.addAll(otherOutranks);
+    				}
+    			}
+    		}
+    	}
+    	return outrankedBy;
+    }
+    
+    public Competitor getOtherPlayer(Competitor c, Outcome o){
+    	Competitor tieFirst = o.first();
+    	Competitor tieSecond = o.second();
+    	if (c.name().equals(tieFirst.name()))
+    		return tieSecond;
+    	else
+    		return tieFirst;
+    	
     }
     
     public boolean isWinner(Competitor c, Outcome d){
@@ -132,9 +233,12 @@ class Competitor1 implements Competitor {
 		List<Outcome> outcomes = new ArrayList<Outcome>();
 		outcomes.add(AdefB);
 		outcomes.add(BdefC);
+		//outcomes.add(new Defeat1(A,D));
 		outcomes.add(CdefD);
-		outcomes.add(AtieD);
-		System.out.println("Winner of A defeated B is: "+BdefC.winner().name());
-		System.out.println("has A defeated B?: "+C.hasDefeated(D, outcomes));
+		//outcomes.add(AtieD);
+		System.out.println("D outranks: "+D.outranks(outcomes));
+		System.out.println("D outranked by: "+D.outrankedBy(outcomes));
+		//System.out.println("Winner of A defeated B is: "+BdefC.winner().name());
+		//System.out.println("has A defeated B?: "+C.hasDefeated(D, outcomes));
     }
 }
