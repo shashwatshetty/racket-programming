@@ -15,8 +15,7 @@ import java.util.*;
 class Competitor1 implements Competitor{
 
 	
-	// the Name of the Competitor
-	String competitorName;
+	String competitorName;  // the Name of the Competitor
 
 	Competitor1(String s) {
 
@@ -29,14 +28,13 @@ class Competitor1 implements Competitor{
 
 	public String name() {
 
-		// Your code goes here.
 		return this.competitorName;
 
 	}
 
-	// GIVEN: another competitor and a list of outcomes
+	// GIVEN: 	another competitor and a list of outcomes
 	// RETURNS: true iff one or more of the outcomes indicates this
-	// competitor has defeated or tied the given competitor
+	// 			  competitor has defeated or tied the given competitor
 
 	public boolean hasDefeated(Competitor c2, List<Outcome> outcomes) {
 
@@ -57,10 +55,10 @@ class Competitor1 implements Competitor{
 		return result;
 	}
 
-	// GIVEN: a list of outcomes
+	// GIVEN: 	a list of outcomes
 	// RETURNS: a list of the names of all competitors mentioned by
-	// the outcomes that are outranked by this competitor,
-	// without duplicates, in alphabetical order
+	// 			  the outcomes that are outranked by this competitor,
+	// 			  without duplicates, in alphabetical order
 
 	public List<String> outranks(List<Outcome> outcomes) {
 
@@ -79,10 +77,10 @@ class Competitor1 implements Competitor{
 		return outranks;
 	}
 
-	// GIVEN: a list of outcomes
+	// GIVEN: 	a list of outcomes
 	// RETURNS: a list of the names of all competitors mentioned by
-	// the outcomes that outrank this competitor,
-	// without duplicates, in alphabetical order
+	// 			  the outcomes that outrank this competitor,
+	// 			  without duplicates, in alphabetical order
 
 	public List<String> outrankedBy(List<Outcome> outcomes) {
 
@@ -111,10 +109,16 @@ class Competitor1 implements Competitor{
 
 	public List<String> powerRanking(List<Outcome> outcomes) {
 
-		// Your code should replace the line below.
+		// Stores all the competitors involved in the outcome list.
 		List<Competitor> allCompetitors = getAllCompetitors(outcomes);
+		
+		// sort all competitors, based on their power ranking.
 		Collections.sort(allCompetitors, 
+				// GIVEN: 	two objects o1 and o2.
+				// RETURNS: -1 iff c1 has a higher power ranking than c2
+				//			  else returns 1.
 				(o1, o2) -> {return powerRankCompare(o1, o2, outcomes);});
+				
 		List<String> powerRank = new ArrayList<String>();
 		for(Competitor c: allCompetitors){
 			powerRank.add(c.name());
@@ -445,29 +449,4 @@ class Competitor1 implements Competitor{
 
 	// You may define help methods here.
 	// You may also define a main method for testing.
-	public static void main(String args[]) {
-		Competitor1 A = new Competitor1("A");
-		Competitor1 B = new Competitor1("B");
-		Competitor1 C = new Competitor1("C");
-		Competitor1 D = new Competitor1("D");
-		Competitor1 E = new Competitor1("E");
-		Competitor1 Z = new Competitor1("Z");
-		Defeat1 ZdefA = new Defeat1(Z, A);
-		Defeat1 AdefB = new Defeat1(A, B);
-		Defeat1 BdefZ = new Defeat1(B, Z);
-		Tie1 ZtieC = new Tie1(Z, C);
-		Tie1 CtieD = new Tie1(C, D);
-		Defeat1 EdefZ = new Defeat1(E, Z);
-		Defeat1 EdefD = new Defeat1(E, D);
-		
-		List<Outcome> outcomes = new ArrayList<Outcome>();
-		outcomes.add(ZdefA);
-		outcomes.add(AdefB);
-		outcomes.add(BdefZ);
-		outcomes.add(ZtieC);
-		outcomes.add(CtieD);
-		outcomes.add(EdefZ);
-		outcomes.add(EdefD);
-		System.out.println("Power Rank: "+ A.powerRanking(outcomes));
-	}
 }

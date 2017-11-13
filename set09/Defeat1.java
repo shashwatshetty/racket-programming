@@ -6,8 +6,7 @@
 
 public class Defeat1 implements Outcome {
 
-    // You should define your fields here.
-	Competitor c1;		// the winner of this defeat outcome.
+    Competitor c1;		// the winner of this defeat outcome.
 	Competitor c2;		// the loser of this defeat outcome.
 
     Defeat1 (Competitor c1, Competitor c2) {

@@ -5,8 +5,7 @@
 
 public class Tie1 implements Outcome {
 
-    // You should define your fields here.
-	Competitor c1;		// one of the competitors of this tie outcome.
+    Competitor c1;		// one of the competitors of this tie outcome.
 	Competitor c2;		// the other competitor of this tie outcome.
 
     Tie1 (Competitor c1, Competitor c2) {
