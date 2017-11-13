@@ -772,7 +772,7 @@
 ;; CONTRACT & PURPOSE STATEMENTS:
 ;; total-count-in-outcome : Competitor Outcome -> NonNegInt
 ;; GIVEN:   the name of a competitor and an outcome
-;; RETURNS: 1 if the given competitor has participated in the
+;; RETURNS: 1 if the given competitor hasX	 participated in the
 ;;             given outcome otherwise 0.
 
 ;; EXAMPLES:
