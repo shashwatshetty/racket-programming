@@ -378,6 +378,12 @@ class Competitor1 implements Competitor{
     //	          in at least one of the outcomes in the given list
     //	          without any repetitions.
 	
+	// EXAMPLES:
+	// getAllCompetitors(A F List<Outcome>[Defeat1(A, D), Defeat1(A, E)
+	//        					  		  Defeat1(C, B), Defeat1(C, F)
+	//        					  		  Tie1(D, B), Defeat1(A, D)])
+	//                  => List<Competitor>[A, B, C, D, F, E]
+	
 	private List<Competitor> getAllCompetitors(List<Outcome> outcomes){
 		Iterator<Outcome> iter = outcomes.listIterator();
 		List<Competitor> allCompetitors = new ArrayList<Competitor>();
@@ -449,6 +455,12 @@ class Competitor1 implements Competitor{
 	// GIVEN: 	two Objects c1 and c2, list of outcomes
 	// RETURNS: -1 iff c1 has a higher power ranking than c2
 	//			  else returns 1.
+	
+	// EXAMPLES:
+	// powerRankCompare (A F List<Outcome>[Defeat1(A, D), Defeat1(A, E)
+	//        					  		  Defeat1(C, B), Defeat1(C, F)
+	//        					  		  Tie1(D, B), Defeat1(A, D)])
+	//                        => -1
 	
 	private int powerRankCompare(Object c1, Object c2, 
 			List<Outcome> outcomes){
