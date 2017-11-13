@@ -35,6 +35,11 @@ class Competitor1 implements Competitor{
 	// GIVEN: 	another competitor and a list of outcomes
 	// RETURNS: true iff one or more of the outcomes indicates this
 	// 			  competitor has defeated or tied the given competitor
+	
+	// EXAMPLES:
+	// A, B & C are Competitor objects.
+	// A.hasDefeated(B, List<Outcome>[Defeat1(A, B), Tie1(B, C)]) => true
+	// A.hasDefeated(C, List<Outcome>[Defeat1(A, B), Tie1(B, C)]) => false
 
 	public boolean hasDefeated(Competitor c2, List<Outcome> outcomes) {
 
@@ -59,6 +64,15 @@ class Competitor1 implements Competitor{
 	// RETURNS: a list of the names of all competitors mentioned by
 	// 			  the outcomes that are outranked by this competitor,
 	// 			  without duplicates, in alphabetical order
+	
+	// EXAMPLES:
+	// A, B & C are Competitor objects.
+	// A.outranks(List<Outcome>[Defeat1(A, B), Tie1(B, C)])
+	//                  =>  List<String>[B, C]
+	// B.outranks(List<Outcome>[Defeat1(A, B), Defeat1(B, A)])
+	//                  =>  List<String>[A, B]
+	// C.outranks(List<Outcome>[Defeat1(A, B), Tie1(B, C)])
+	//                  =>  List<String>[B, C]
 
 	public List<String> outranks(List<Outcome> outcomes) {
 
@@ -81,6 +95,15 @@ class Competitor1 implements Competitor{
 	// RETURNS: a list of the names of all competitors mentioned by
 	// 			  the outcomes that outrank this competitor,
 	// 			  without duplicates, in alphabetical order
+	
+	// EXAMPLES:
+	// A, B & C are Competitor objects.
+	// A.outrankedBy(List<Outcome>[Defeat1(A, B), Tie1(B, C)])
+	//              	  =>  List<String>[]
+	// B.outrankedBy(List<Outcome>[Defeat1(A, B), Defeat1(B, A)])
+	//             	      =>  List<String>[A, B]
+	// C.outrankedBy(List<Outcome>[Defeat1(A, B), Tie1(B, C)])
+	//           	      =>  List<String>[B, C]
 
 	public List<String> outrankedBy(List<Outcome> outcomes) {
 
@@ -106,6 +129,12 @@ class Competitor1 implements Competitor{
 	// 			  the name of competitor A coming before the name of
 	// 			  competitor B in the list if and only if the power-ranking
 	// 			  of A is higher than the power ranking of B.
+	
+	// EXAMPLES:
+	// powerRanking(List<Outcome>[Defeat1(A, D), Defeat1(A, E)
+	//        					  Defeat1(C, B), Defeat1(C, F)
+	//        					  Tie1(D, B), Defeat1(A, D)]
+	//        	=>   List<String>[C, A, F, E, B, D]
 
 	public List<String> powerRanking(List<Outcome> outcomes) {
 
