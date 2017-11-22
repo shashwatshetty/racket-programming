@@ -73,4 +73,24 @@ public class Player1 implements Player{
 		this.isSuspended = newStatus;
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + 
+					((playerName == null) ? 0 : playerName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Player) {
+            Player p = (Player) obj;
+            return this == p;
+        }
+        else return false;
+	}
+	
+	
+
 }
