@@ -5,7 +5,7 @@
 // Interpretation:
 //		name:  is the name of the player.
 
-public class Player1 implements Player{
+public class Player1 implements Player, Comparable{
 
 	private String playerName;     // name of the player.
 	private boolean underContract; // true iff player is under contract.
@@ -14,7 +14,7 @@ public class Player1 implements Player{
 	
 	Player1(String name){
 		this.playerName = name;
-		this.underContract = false;
+		this.underContract = true;
 		this.isInjured = false;
 		this.isSuspended = false;
 	}
@@ -73,6 +73,8 @@ public class Player1 implements Player{
 		this.isSuspended = newStatus;
 	}
 
+	// Returns the hashcode of this player object.
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -82,6 +84,9 @@ public class Player1 implements Player{
 		return result;
 	}
 
+	// Returns true iff this player object and the given obj
+	// are the same.
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Player) {
@@ -90,7 +95,11 @@ public class Player1 implements Player{
         }
         else return false;
 	}
-	
-	
 
+	
+	@Override
+	public int compareTo(Object o) {
+		Player p = (Player) o;
+		return this.name().compareTo(p.name());
+	}
 }
