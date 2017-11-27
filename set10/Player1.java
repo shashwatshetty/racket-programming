@@ -84,8 +84,15 @@ public class Player1 implements Player, Comparable{
 		return result;
 	}
 
-	// Returns true iff this player object and the given obj
-	// are the same.
+	// RETURNS: true iff this player object and the given obj
+	// 			  are the same.
+	
+	// EXAMPLES:
+	// Player p1 = Players.make("A")
+	// Player p2 = Players.make("B")
+	// Player p = p1
+	// p1.equals(p2)  => false
+	// p1.equals(p)   => true
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -96,6 +103,22 @@ public class Player1 implements Player, Comparable{
         else return false;
 	}
 
+	// GIVEN: an object o
+	// WHERE: the object is another Player.
+	// RETRUNS: -1 iff this player has a name lexicographically less than
+	// 			  the given player's name
+	//			 0 iff this player has a name lexicographically same as
+	// 			  the given player's name.
+	//			 1 iff this player has a name lexicographically more than
+	// 			  the given player's name.
+		
+	// EXAMPLES:
+	// Player p1 = Players.make("A")
+	// Player p2 = Players.make("B")
+	// Player p3 = PLayers.make("C")
+	// p2.comapreTo(p1)  => -1
+	// p2.compareTo(p2)  =>  0
+	// p2.compareTo(p3)  =>  1
 	
 	@Override
 	public int compareTo(Object o) {
