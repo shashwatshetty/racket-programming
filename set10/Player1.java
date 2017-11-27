@@ -125,4 +125,14 @@ public class Player1 implements Player, Comparable{
 		Player p = (Player) o;
 		return this.name().compareTo(p.name());
 	}
+
+	// RETURNS: the printable String for the this Player.
+	
+	// EXAMPLES:
+	// Players.make("Joe").toString() => "Player with name = Joe"
+	
+	@Override
+	public String toString() {
+		return "Player with name = " + this.playerName;
+	}
 }

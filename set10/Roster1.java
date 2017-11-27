@@ -7,7 +7,7 @@ import java.util.*;
 // new Roster1 (SortedSet<Player> players)
 
 //Interpretation:
-//	players:  is the list of players in this Roster.
+//	players:  is the lexicographically sorted set of players in this Roster.   
 
 
 public class Roster1 implements Roster{
@@ -67,7 +67,14 @@ public class Roster1 implements Roster{
     //     r.without(p).has(p)  =>  false
 	
 	public boolean has(Player p) {
-		return this.players.contains(p);
+		Iterator<Player> iter = this.iterator();
+		while(iter.hasNext()){
+			Player inRoster = iter.next();
+			if(inRoster.equals(p)){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// RETURNS:  the number of players on this roster.
@@ -81,6 +88,7 @@ public class Roster1 implements Roster{
 	//     r.with(p).size()             =>  n+1
 	//     r.with(p).with(p).size()     =>  n+1
 	//     r.with(p).without(p).size()  =>  n
+	
 	public int size() {
 		return this.players.size();
 	}
@@ -178,5 +186,14 @@ public class Roster1 implements Roster{
 		}
 		return true;
 	}
+
+	// RETURNS: the printable String for the this Roster.
 	
+	// EXAMPLES:
+	// Rosters.empty().toString() => "Roster has size = 0"
+		
+	@Override
+	public String toString() {
+		return "Roster has size = " + this.size();
+	}
 }
