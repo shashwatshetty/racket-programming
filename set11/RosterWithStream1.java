@@ -3,7 +3,7 @@ import java.util.stream.Stream;
 
 public class RosterWithStream1 implements RosterWithStream {
 
-	private Set<Player> players;  // set of players in this RosterWithStream.
+	private SortedSet<Player> players;  // set of players in this RosterWithStream.
 	
 	// default constructor.
 	
@@ -13,7 +13,7 @@ public class RosterWithStream1 implements RosterWithStream {
 	
 	// parameterized constructor.
 	
-	RosterWithStream1(Set<Player> players){
+	RosterWithStream1(SortedSet<Player> players){
 		// this players will store given set of players.
 		this.players = players;
 	}
@@ -27,7 +27,7 @@ public class RosterWithStream1 implements RosterWithStream {
 		
 	@Override
 	public RosterWithStream with(Player p) {
-		Set<Player> newRosterSet = new TreeSet<Player>(this.players);
+		SortedSet<Player> newRosterSet = new TreeSet<Player>(this.players);
 		newRosterSet.add(p);
 		return new RosterWithStream1(newRosterSet);
 	}
@@ -42,7 +42,7 @@ public class RosterWithStream1 implements RosterWithStream {
 		
 	@Override
 	public RosterWithStream without(Player p) {
-		Set<Player> newRosterSet = new TreeSet<Player>(this.players);
+		SortedSet<Player> newRosterSet = new TreeSet<Player>(this.players);
 		newRosterSet.remove(p);
 		return new RosterWithStream1(newRosterSet);
 	}
@@ -121,7 +121,7 @@ public class RosterWithStream1 implements RosterWithStream {
 
 	@Override
 	public RosterWithStream readyRoster() {
-		Set<Player> readySet = new TreeSet<Player>();
+		SortedSet<Player> readySet = new TreeSet<Player>();
 		Iterator<Player> iter = this.iterator();
 		while(iter.hasNext()){
 			Player p = iter.next();
@@ -137,13 +137,13 @@ public class RosterWithStream1 implements RosterWithStream {
 
 	@Override
 	public Iterator<Player> iterator() {
-		Set<Player> temp = new TreeSet<Player>(this.players);
+		SortedSet<Player> temp = new TreeSet<Player>(this.players);
 		return temp.iterator();
 	}
 
 	@Override
 	public Stream<Player> stream() {
-		Set<Player> temp = new TreeSet<Player>(this.players);
+		SortedSet<Player> temp = new TreeSet<Player>(this.players);
 		return temp.stream();
 		//return this.stream();
 	}

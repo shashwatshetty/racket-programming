@@ -121,7 +121,7 @@ public class Player1 implements Player, Comparable{
 	@Override
 	public int compareTo(Object o) {
 		Player p = (Player) o;
-		if(this.name().compareTo(p.name()) == 0){
+		if(this.name().compareTo(p.name()) == 0 && !this.equals(p)){
 			return -1;
 		}else{
 			return this.name().compareTo(p.name());
