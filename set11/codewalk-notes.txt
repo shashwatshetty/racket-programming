@@ -1,0 +1,42 @@
+TA-1 Name: - Viranchi
+TA-2 Name: - Prasad
+
+Student CCIS ID: sha5hw4t
+
+Problem Set #: set11
+Question Codewalked: - Q1, Q2
+
+Q1 Design Grade: - A
+Q1 Presentation Grade: - AB
+
+Q2 Design Grade: - A
+Q2 Presentation Grade: - AB
+
+================
+
+Presentation:
+
+-- student was able to explain the design choces and design implementation
+
+-- student was able to answer question what stream is, how it is implemented
+
+-- student was able to explain what is allMatch, Predicate, reduce
+
+-- was confused while explaining is the reduce function associative
+
+================
+
+Interfaces, Objects, and Classes
+
+-- Spliterator not used while implementing stream but order is maintained
+
+================
+
+Other:
+
+
+================
+
+
+
+
